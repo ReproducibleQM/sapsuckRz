@@ -24,5 +24,5 @@ MN= Minnesota, MO= Missouri, SD= South Dakota, WI= Wisconsin
 Site= Specific location of turbine trap where specimen were collected.
 Date= The day of the year (out of 365) on which the speciam was collected. 
 Sex= The sex of the collected speciman. M=Male, F=Female
-Captures= The number of individuals caught at that site on that date
+Captures= The number of individuals caught at that site on that date.
 Aphid.Species= The genus and species of the captured specimens. 
