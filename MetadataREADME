@@ -1,0 +1,28 @@
+Project: Aphid flight patterns in the US midwest
+
+Data source: Aphids are tiny soft-bodied herbivores with very interesting life cycles- 
+many species alternate between host species at different times of the year, and will also migrate between 
+hosts of the same species due to a variety of environmental or densitiy dependant triggers. 
+The Midwestern Aphid Suction trap network was established in 2004, originally as a surveilance tool for the recent 
+invader and economic pest, soybean aphid. Its 42 sites stretch over a 1000 km x 1000 KM area in the US midwest, from Manhattan, 
+KS, in the south to Crookston MN in the north, and Brookings SD to I can't remember the site, but it's an MSU station near lake Erie. 
+The network provides weekly data on aphid captures May-September. Aphids are idenified to species, sex, and tallied for each location 
+for each week. Approximately 120 species have been captured by this network, with ~25 species common enough to support a meaningful 
+analysis of some kind. The survey was initiated by David Voegtlin of the Illinois Natural History Survey, and since he retired, 
+has been maintained by Doris Lagos, an (amazing) aphid systematist. Dr. Christie Bahlai is their database manager, and holds 
+the database at the KBS data repository.
+
+Contact: Christie Bahlai, Doris Lagos
+
+Dataset (full raw data) :https://dl.dropboxusercontent.com/u/98197254/Mastersuction_may29_2014.csv
+
+Variables: 
+V1=
+Year= The year that the specimens were collected
+State= The U.S. state that the specimens were collected. IA=Iowa, IL= Illinois, IN=Indiana, KS= Kansas, KY= Kentucky, MI= Michigan, 
+MN= Minnesota, MO= Missouri, SD= South Dakota, WI= Wisconsin
+Site= Specific location of turbine trap where specimen were collected.
+Date= The day of the year (out of 365) on which the speciam was collected. 
+Sex= The sex of the collected speciman. M=Male, F=Female
+Captures= The number of individuals caught at that site on that date
+Aphid.Species= The genus and species of the captured specimens. 
