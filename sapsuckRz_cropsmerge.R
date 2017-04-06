@@ -1,6 +1,12 @@
 ## Merging land cover data with panel site data
 ## Aphid list reduction by Chad Zirbel (crzirbel@gmail.com), merge script by Braeden Van Deynze (vandeynz@gmail.com)
 
+## Libraries needed the include 'vegan' and 'reshape'. The next two lines of code installs these two packages if they are not already installed. 
+## Just uncomment the following 2 lines to get them installed.
+
+# install.packages("vegan")
+# install.packages("reshape")
+
 library(data.table)
 library(reshape)
 library(vegan)
