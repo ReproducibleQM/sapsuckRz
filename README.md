@@ -16,4 +16,4 @@ The analysis script pulls this data into R from figshare.
 [google drive folder](https://drive.google.com/drive/folders/0B7EmIF4p0bakV01yanpHSHFYYzA?usp=sharing) for non-code analysis
 
 ## More about the project
-This project is a group project the [Reproducible Quantitative methods course](https://cbahlai.github.io/rqm-template/) offered at MSU by [Christi Bahlai](https://sites.google.com/site/cbahlai/).
+This project is a group project the [Reproducible Quantitative methods course](https://cbahlai.github.io/rqm-template/) offered at MSU by [Christie Bahlai](https://sites.google.com/site/cbahlai/).
