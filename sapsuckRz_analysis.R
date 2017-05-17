@@ -15,7 +15,7 @@ aphid.ag<-aggregate(Captures~Aphid.Species,data=aphid,sum)
 #order data from most number of captures to least
 aphid.ord<-aphid.ag[order(-aphid.ag$Captures),] 
 #make a list of the 10 most common species
-aphid.names.cut<-aphid.ord$Aphid.Species[1:10]
+aphid.names.cut<-aphid.ord$Aphid.Species[1:25]
 #cut down the data to only include those 10 species
 aphid.cut<-aphid[aphid$Aphid.Species%in%aphid.names.cut]
 
@@ -58,10 +58,9 @@ legend(x=.85,y=1,expression("Iowa","Illinois","Indiana","Michigan","Minnesota","
        ,pch=16,col=c("#e41a1c","lightblue","#4daf4a","#984ea3","#ff7f00","darkblue","#a65628","#f781bf","#999999","black"),cex=.85)
 dev.off()
 
-#Looking for phenology change
-
-
-
+##Looking for phenology change
+aphid.max<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(which.max(Captures)))
+aphid.first<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(Captures!=0) %>% slice(which.min(Date)))
 
 #Number of captures through time across all sites
 ggplot(aphid.cut,aes(time,Captures,colour=Aphid.Species))+
