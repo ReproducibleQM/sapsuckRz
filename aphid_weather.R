@@ -138,6 +138,8 @@ station.list <- allStations()
 getFilteredStationsByCity(location$loc, station.list, begin = 2005, end = 2013)
 weather<-getInterpolatedDataByCity(location$loc, station.list, begin = 2005, end = 2013,tolerance = 0.25)
 
+##
+
 library(reshape2)
 
 weather.cast<-dcast(weather_data,param~data)
@@ -152,5 +154,3 @@ weather.cast$End_of_Week <- weather.cast$Date + (6 - weather.cast$Week_Day)
 
 # Aggregate over week and climate division
 aggregate(cbind(precipitation,tmax,tmin)~End_of_Week+location, FUN=sum, data=weather.data, na.rm=TRUE)
-
-#Add line to show how github works
