@@ -1,7 +1,7 @@
-# sapsuckRz
+# SapsuckRz
 Repo for Aphid Suction trap project.
 
-We aim to investigate how climate and landscape (including crop cover) affect aphid emergence and peak abundace across a large extent of the United States over a period of 11 years (2005-2015). We hope to understand potential drivers of pest and non-pest aphid species abundance and how this might change due to antropogenic climate change climate change.
+We aim to investigate how climate and landscape (including crop cover) affect aphid emergence and peak abundace across a large extent of the United States over a period of 11 years (2005-2015). We hope to understand potential drivers of pest and non-pest aphid species abundance and how this might change due to antropogenic climate change.
 
 ## Data we are using
 
