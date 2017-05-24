@@ -12,6 +12,8 @@ Aphid abuance data set available from [KBS LTER database](http://lter.kbs.msu.ed
 weather data pulled from the [prism_weather_data_pull.R](https://github.com/ReproducibleQM/sapsuckRz/blob/master/prism_weather_data_pull.R) scirpt can be found on figureshare: [here](https://figshare.com/articles/weather_data_csv/5012747)
 The analysis script pulls this data into R from figshare.
 
+landcover data pulled from [cdl_landcover_data_pull.R] via the USDA Cropland Data Layer. The intermediate data product is stored directly on this repository.
+
 ## Follow our progress
 [google drive folder](https://drive.google.com/drive/folders/0B7EmIF4p0bakV01yanpHSHFYYzA?usp=sharing) for non-code analysis
 
