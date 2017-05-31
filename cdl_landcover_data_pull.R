@@ -110,7 +110,7 @@ rm(cdl.raster)
 }
 
 ##Now we need to export our data (above pull will take a lot of time, advised to execute on a dedicated machine)
-write.csv(crop_data, file = "crop_data.csv", row.names = FALSE) #saves data in csv
+write.csv(crop_data, file = "crop_data.csv", row.names = FALSE, na="0") #saves data in csv
 
 # send mail alerts for completion
 
