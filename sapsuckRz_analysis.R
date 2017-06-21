@@ -155,6 +155,13 @@ e <- coef(fit4.2005)[5]
 x <- sol$maximum 
 eval(dfdx)
 
+#same as above but for just one site
+fit4.2005.2<- lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
+#generate range of 50 numbers starting from 30 and ending at 160
+xx <- seq(90,360, length=50)
+plot(Captures~Date,pch=19,ylim=c(0,500),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
+lines(xx, predict(fit4.2005.2, data.frame(Date=xx)), col="red",lwd=4)
+
 ##
 par(mfrow=c(3,3))
 for(i in 2005:2013){
@@ -163,6 +170,5 @@ for(i in 2005:2013){
   lines(xx, predict(lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==i,]),
                     data.frame(Date=xx)), col="red",lwd=4)
 }
-
 
 ##degree day accumulation
