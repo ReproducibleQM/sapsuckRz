@@ -4,6 +4,7 @@
 library(data.table)
 library(ggplot2)
 library(vegan)
+library(dplyr)
 
 ##load in aphid data
 #Using fread in the data.table package because this file is quite large
@@ -57,10 +58,6 @@ points(nmds.aphid,display="sites",pch=16,cex=1.25,col=c("#e41a1c","lightblue","#
 legend(x=.85,y=1,expression("Iowa","Illinois","Indiana","Michigan","Minnesota","Wisconsin","Kansas","Kentucky","Missouri","South Dakota")
        ,pch=16,col=c("#e41a1c","lightblue","#4daf4a","#984ea3","#ff7f00","darkblue","#a65628","#f781bf","#999999","black"),cex=.85)
 dev.off()
-
-##Looking for phenology change
-aphid.max<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(which.max(Captures)))
-aphid.first<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(Captures!=0) %>% slice(which.min(Date)))
 
 #Number of captures through time across all sites
 ggplot(aphid.cut,aes(time,Captures,colour=Aphid.Species))+
@@ -124,3 +121,48 @@ ggplot(aphid.cut.aphgly,aes(time,Captures,colour=Aphid.Species))+
         panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         axis.line = element_line(size=.7, color="black"),
         strip.background = element_rect(colour="white", fill="white"),legend.position="top")
+
+##Looking for phenology change
+aphid.max<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(which.max(Captures)))
+aphid.first<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(Captures!=0) %>% slice(which.min(Date)))
+
+#looking across all aphid species
+aphid.all<-aggregate(Captures~Year+Date+Site,data=aphid,sum)
+
+fit4.2005<- lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==2005,])
+#generate range of 50 numbers starting from 30 and ending at 160
+xx <- seq(90,360, length=50)
+plot(Captures~Date,pch=19,ylim=c(0,500),data=aphid.all[aphid.all$Year==2005,])
+lines(xx, predict(fit4.2005, data.frame(Date=xx)), col="red",lwd=4)
+
+##
+fits <- fit4.2005$fitted.values
+
+aphid.all.2005<-aphid.all[aphid.all$Year==2005,]
+fit.df <- as.data.frame(cbind(aphid.all.2005$Date, aphid.all.2005$Captures, fits))
+##
+fn <- function(x, coefs) as.numeric(c(1, x, x^2, x^3 ,x^4) %*% coefs) 
+
+sol<-optimize(fn, coef(fit4.2005), interval=c(150,320),maximum=T)
+
+dfdx <- D(D( expression(a + b*x + c*x^2 + d*x^3 + e*x^4), "x"),"x" )
+
+a <- coef(fit4.2005)[1] 
+b <- coef(fit4.2005)[2] 
+c <- coef(fit4.2005)[3] 
+d <- coef(fit4.2005)[4] 
+e <- coef(fit4.2005)[5]
+x <- sol$maximum 
+eval(dfdx)
+
+##
+par(mfrow=c(3,3))
+for(i in 2005:2013){
+  xx <- seq(40,360, length=50)
+  plot(Captures~Date,pch=19,ylim=c(0,800),data=aphid.all[aphid.all$Year==i,])
+  lines(xx, predict(lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==i,]),
+                    data.frame(Date=xx)), col="red",lwd=4)
+}
+
+
+##degree day accumulation
