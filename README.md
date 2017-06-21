@@ -12,7 +12,7 @@ Aphid abuance data set available from [KBS LTER database](http://lter.kbs.msu.ed
 weather data pulled from the [prism_weather_data_pull.R](https://github.com/ReproducibleQM/sapsuckRz/blob/master/prism_weather_data_pull.R) scirpt can be found on figureshare: [here](https://figshare.com/articles/weather_data_csv/5012747)
 The analysis script pulls this data into R from figshare.
 
-landcover data pulled from [cdl_landcover_data_pull.R] via the USDA Cropland Data Layer. The intermediate data product is stored directly on this repository.
+landcover data pulled from [cdl_landcover_data_pull.R](https://github.com/ReproducibleQM/sapsuckRz/blob/master/cdl_landcover_data_pull.R) via the USDA Cropland Data Layer. The intermediate data product is stored directly on this repository: [here](https://github.com/ReproducibleQM/sapsuckRz/blob/master/Data/cdl_landcover_data.csv).
 
 ## EDA- Exploratory Data Analysis
 The folder with EDA was generated during the process of working through the data and potential projects/vinettes we hoped to move forward with. As these are exploratory, the code isn't super clean; however, we thought it useful to highlight the scientific process and any code we utilized prior to the final analysis.
