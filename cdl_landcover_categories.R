@@ -1,0 +1,50 @@
+library(cdlTools)
+
+# What landcovers are we dealing with? Let's build a convient key for the codes from the data.
+cdl <- read.csv2("https://raw.githubusercontent.com/ReproducibleQM/sapsuckRz/master/Data/cdl_landcover_data.csv", sep=",", check.names = F, 
+                 na.strings = "0.0")
+landtypes <- colnames(cdl)
+landcodes <- updateNamesCDL(landtypes)
+
+codekey <- data.frame(landtypes,landcodes)
+view(codekey) #This dataframe lists all of the lables for the various codes we have. All of the codes presented have a "non-zero" presence near 
+              #a site for at least one year, so all codes must be accounted for.
+
+# Now let's remove all the dumb NA's and replace them with zeros.
+for(i in 4:108){
+  cdl[,i] <- as.numeric(as.character(cdl[,i]))
+}
+cdl[is.na(cdl)]<- 0
+
+# Now let's build some categories for the landcover types. We don't need to distinguish between sorghum and barley or between watermelons
+# and tomatoes. Some of these categories are simply sums of the smaller categories. Also, note that for now double crops are simply measured twice, 
+# once for each category they are in.
+for(j in 1:length(cdl)){
+  cdl$for_con[j] <- sum(cdl[j,c('142')]) #Conifers
+  cdl$for_dec[j] <- sum(cdl[j,c('141')]) #Deciduous
+  cdl$for_mix[j] <- sum(cdl[j,c('63','143')]) #Mixed
+  cdl$forest[j] <- cdl$'for_con'[j] + cdl$'for_dec'[j] + cdl$'for_mix'[j] #This is a pooling variable for all forest.
+  
+  cdl$grass[j] <- sum(cdl[j,c('176','152','60','58')]) #These are non-agricultural grasslands.
+  
+  cdl$water[j] <- sum(cdl[j,c('111','92')])
+  
+  cdl$urb[j] <- sum(cdl[j,c('121','122','123','124')]) #These are different levels of developed land.
+  
+  cdl$ag_corn[j] <- sum(cdl[j,c('1', '13', '225', '241', '12', '226',
+                                '237')])
+  cdl$ag_beans[j] <- sum(cdl[j,c('5', '26', '241', '240', '254', '239')]) #Note that beans refers to soybeans. Other beans are in the other category.
+  cdl$ag_wheat[j] <- sum(cdl[j,c('24', '23', '205', '39', '26', '225', '22', '236', '238')])
+  cdl$ag_other[j] <- sum(cdl[j,c('4', '61', '27', '36', '28', '59', '29', '44', '21', '6', '37', '32', '42', '41', '236', '68', '43','53', '47', '25',
+                                 '74', '240', '254', '48', '67', '2', '209', '239', '46', '238', '70', '229', '216', '57', '10', '226', '76', '222', 
+                                 '235', '237', '224', '242', '31', '33', '11', '71', '54', '69', '246', '219', '66', '243', '250', '49', '50', 
+                                 '206', '221', '38', '244', '207', '77', '30', '14', '249', '245', '247', '220', '214', 
+                                 '55', '248', '35', '210', '34')])
+  cdl$ag[j] <- cdl$ag_corn[j] + cdl$ag_beans[j] + cdl$ag_wheat[j] + cdl$ag_other[j] #This variable pools all arable land.
+  
+  cdl$wet[j] <- sum(cdl[j,c('190','195','87')]) #These are various wetland categories.
+  
+  cdl$other[j] <- sum(cdl[j,c('131','0')])
+}
+#Great! Now we just need to remove the initial numerically titled variables and we're good to go.
+cdl_sort <- cdl[,c('ID','State','Year','for_con','for_dec','for_mix','forest','ag_corn','ag_beans','ag_wheat','ag_other','ag','wet','urb','water','other')]
