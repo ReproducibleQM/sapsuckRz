@@ -5,6 +5,8 @@ library(data.table)
 library(ggplot2)
 library(vegan)
 library(dplyr)
+library(reshape2)
+source("custom_functions.r")
 
 ##load in aphid data
 #Using fread in the data.table package because this file is quite large
@@ -156,11 +158,14 @@ x <- sol$maximum
 eval(dfdx)
 
 #same as above but for just one site
-fit4.2005.2<- lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
+fit4.2005.2<- lm(Captures~poly(Date,2,raw=TRUE),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
+
 #generate range of 50 numbers starting from 30 and ending at 160
 xx <- seq(90,360, length=50)
 plot(Captures~Date,pch=19,ylim=c(0,500),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
 lines(xx, predict(fit4.2005.2, data.frame(Date=xx)), col="red",lwd=4)
+
+sol2<-optimize(fn, coef(fit4.2005.2), interval=c(150,320),maximum=T)
 
 ##
 par(mfrow=c(3,3))
@@ -171,4 +176,21 @@ for(i in 2005:2013){
                     data.frame(Date=xx)), col="red",lwd=4)
 }
 
-##degree day accumulation
+##degree day accumulation##
+#load in weather data
+weather<-read.csv("https://ndownloader.figshare.com/files/8448380")
+#make weather data wide
+weather.cast<-dcast(weather, date+siteid~param,value.var="data",sum)
+names(weather.cast)<-c("date","site.id","max.temp","min.temp","precip")
+
+#calculate degree days for each site in each year
+
+#first replace missing values with interpolated data
+weather.cast$max.temp<-replace.missing(weather.cast$max.temp)
+weather.cast$min.temp<-replace.missing(weather.cast$min.temp)
+weather.cast$precip<-replace.missing(weather.cast$precip)
+
+#create day of year variable
+
+#degree days
+weather.cast$dd<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,)
