@@ -195,7 +195,26 @@ weather.cast$precip<-replace.missing(weather.cast$precip)
 weather.cast$date<-ymd(weather.cast$date)
 weather.cast$doy<-yday(weather.cast$date)
 
+#reorder so that we calculate degree days for each site in each year
+weather.cast<-weather.cast[with(weather.cast, order(site.id,date)), ]
+
 #degree days
-weather.cast$dd<-for(i in 1:46){
-  accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,weather.cast$doy,)
-}
+weather.cast$dd<-allen(weather.cast$max.temp, weather.cast$min.temp, 10)
+
+#degree day accumulation
+#starting March 1
+weather.cast$dd.acum<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,weather.cast$doy,60)
+
+##precipitation data
+#first add a week variable to the weather data
+weather.cast$week<-isoweek(weather.cast$date)
+
+#precipitation accumulation per week
+weather.cast$precip.week<-accum.precip(weather.cast$precip,weather.cast$week)
+
+#number of rainy days per week
+weather.cast$rain.days<-rainy.days(weather.cast$precip,weather.cast$week)
+
+#precipitation accumulation over the growing season
+#starting March 1
+weather.cast$precip.accum<-accum.precip.time(weather.cast$precip,weather.cast$doy,60)
