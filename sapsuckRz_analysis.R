@@ -6,6 +6,7 @@ library(ggplot2)
 library(vegan)
 library(dplyr)
 library(reshape2)
+library(lubridate)
 source("custom_functions.r")
 
 ##load in aphid data
@@ -191,6 +192,10 @@ weather.cast$min.temp<-replace.missing(weather.cast$min.temp)
 weather.cast$precip<-replace.missing(weather.cast$precip)
 
 #create day of year variable
+weather.cast$date<-ymd(weather.cast$date)
+weather.cast$doy<-yday(weather.cast$date)
 
 #degree days
-weather.cast$dd<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,)
+weather.cast$dd<-for(i in 1:46){
+  accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,weather.cast$doy,)
+}
