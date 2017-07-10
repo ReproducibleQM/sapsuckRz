@@ -129,7 +129,7 @@ ggplot(aphid.cut.aphgly,aes(time,Captures,colour=Aphid.Species))+
 aphid.max<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(which.max(Captures)))
 aphid.first<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% slice(Captures!=0) %>% slice(which.min(Date)))
 
-#looking across all aphid species
+#looking across all aphid species ####WE WILL NEED THIS LATTER####
 aphid.all<-aggregate(Captures~Year+Date+Site,data=aphid,sum)
 
 fit4.2005<- lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==2005,])
@@ -198,6 +198,9 @@ weather.cast$doy<-yday(weather.cast$date)
 #reorder so that we calculate degree days for each site in each year
 weather.cast<-weather.cast[with(weather.cast, order(site.id,date)), ]
 
+#flip some temp data because min is higher than max
+weather.cast[weather.cast$min.temp > weather.cast$max.temp, c("max.temp", "min.temp")] <- weather.cast[weather.cast$min.temp > weather.cast$max.temp, c("min.temp", "max.temp")] 
+
 #degree days
 weather.cast$dd<-allen(weather.cast$max.temp, weather.cast$min.temp, 10)
 
@@ -218,3 +221,5 @@ weather.cast$rain.days<-rainy.days(weather.cast$precip,weather.cast$week)
 #precipitation accumulation over the growing season
 #starting March 1
 weather.cast$precip.accum<-accum.precip.time(weather.cast$precip,weather.cast$doy,60)
+
+##
