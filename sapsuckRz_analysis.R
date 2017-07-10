@@ -208,6 +208,9 @@ weather.cast$dd<-allen(weather.cast$max.temp, weather.cast$min.temp, 10)
 #starting March 1
 weather.cast$dd.acum<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,weather.cast$doy,60)
 
+#getting 8 warnings. look for misbehaving rows
+weather.cast[c(which(is.na(weather.cast), arr.ind=TRUE)[,1]),]
+
 ##precipitation data
 #first add a week variable to the weather data
 weather.cast$week<-isoweek(weather.cast$date)
