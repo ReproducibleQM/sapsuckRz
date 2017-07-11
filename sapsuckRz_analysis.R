@@ -202,11 +202,11 @@ weather.cast<-weather.cast[with(weather.cast, order(site.id,date)), ]
 weather.cast[weather.cast$min.temp > weather.cast$max.temp, c("max.temp", "min.temp")] <- weather.cast[weather.cast$min.temp > weather.cast$max.temp, c("min.temp", "max.temp")] 
 
 #degree days
-weather.cast$dd<-allen(weather.cast$max.temp, weather.cast$min.temp, 10)
+weather.cast$dd<-allen(weather.cast$max.temp, weather.cast$min.temp, 10.000001)
 
 #degree day accumulation
 #starting March 1
-weather.cast$dd.acum<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10,weather.cast$doy,60)
+weather.cast$dd.acum<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10.000001,weather.cast$doy,60)
 
 #getting 8 warnings. look for misbehaving rows
 weather.cast[c(which(is.na(weather.cast), arr.ind=TRUE)[,1]),]
@@ -215,10 +215,10 @@ weather.cast[c(which(is.na(weather.cast), arr.ind=TRUE)[,1]),]
 #first add a week variable to the weather data
 weather.cast$week<-isoweek(weather.cast$date)
 
-#precipitation accumulation per week
+#precipitation accumulation per week ####NOT USEFUL. ONLY ONE MEASUREMENT PER WEEK####
 weather.cast$precip.week<-accum.precip(weather.cast$precip,weather.cast$week)
 
-#number of rainy days per week
+#number of rainy days per week ####NOT USEFUL. ONLY ONE MEASUREMENT PER WEEK####
 weather.cast$rain.days<-rainy.days(weather.cast$precip,weather.cast$week)
 
 #precipitation accumulation over the growing season
