@@ -225,4 +225,52 @@ weather.cast$rain.days<-rainy.days(weather.cast$precip,weather.cast$week)
 #starting March 1
 weather.cast$precip.accum<-accum.precip.time(weather.cast$precip,weather.cast$doy,60)
 
-##
+##Combine the weather and aphid data##
+names(aphid.all)<-c("year","doy","site.id","captures")#so they match
+weather.cast$year<-isoyear(weather.cast$date)
+
+data<-merge(aphid.all,weather.cast,by=c("site.id","year","doy"),all.x=T)
+
+##Start building models##
+
+#fit quadratic term
+data$dd.acum2<-(data$dd.acum)^2
+
+#fit model
+aphid_model<-glm(captures~dd.acum+dd.acum2, 
+               data=data, family=poisson)
+summary(aphid_model)
+
+#extract the coefficients from model
+data<-data.table(data)
+test<-data[,list(var=rownames(summary(aphid_model)$coefficients),coef=summary(glm(captures~dd.acum+dd.acum2,family=poisson))$coefficients[,1], error=summary(glm(captures~dd.acum+dd.acum2,family=poisson))$coefficients[,2]),by=c("site.id","year")]
+
+coef<-as.data.frame(summary(aphid_model)$coefficients)
+coef<-coef[,1:2]
+
+ddcoef<-coef$Estimate[2]
+dd2coef<-coef$Estimate[3]
+ddcoef.err<-coef$"Std. Error"[2]
+dd2coef.err<-coef$"Std. Error"[3]
+
+#create a vector of years
+year<-(2005:2013)
+
+#create vector of coefficients
+#2005 is the 'intercept' vector. Give it a year 
+#modifier and error of zero
+
+yearcoef<-c(0, coef$Estimate[24:34])
+yearcoef.err<-c(0, coef$"Std. Error"[24:34])
+
+#create a new data frame to integrate the coeficients with the year vector
+peaks<-as.data.frame(cbind(year, yearcoef, yearcoef.err))
+
+#peak will occur at -ddcoeficient/(2(dd2coeficient+year coeficient))
+peaks$peak<- -ddcoef/(2*(dd2coef+yearcoef))
+
+#peak error calculated using the general error propagation formula
+#this will be a bit inelegant, but I calculated the partial derrivatives 
+#relative to each variable myself!
+peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
+                       (ddcoef/(2*(dd2coef+yearcoef))^2)^2*(dd2coef.err^2+yearcoef.err^2))
