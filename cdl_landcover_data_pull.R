@@ -48,7 +48,7 @@ cdl.raster <- getCDL(state,years)
 ##okay now, let's chose a point in this map and see what crops are around it
 
 # load location data
-location<-read.csv("https://raw.githubusercontent.com/ReproducibleQM/sapsuckRz/master/counties%2Bcoordinates2.csv")
+location<-read.csv("https://raw.githubusercontent.com/ReproducibleQM/sapsuckRz/master/Data/counties%2Bcoordinates2.csv")
 location$SITEID <- as.character(location$SITEID)
 location$COUNTY <- as.character(location$COUNTY)
 location$STATE <- as.character(location$STATE)
