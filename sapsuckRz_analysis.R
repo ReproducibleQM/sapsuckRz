@@ -212,15 +212,6 @@ weather.cast$dd.acum<-accum.allen(weather.cast$max.temp,weather.cast$min.temp,10
 weather.cast[c(which(is.na(weather.cast), arr.ind=TRUE)[,1]),]
 
 ##precipitation data
-#first add a week variable to the weather data
-weather.cast$week<-isoweek(weather.cast$date)
-
-#precipitation accumulation per week ####NOT USEFUL. ONLY ONE MEASUREMENT PER WEEK####
-weather.cast$precip.week<-accum.precip(weather.cast$precip,weather.cast$week)
-
-#number of rainy days per week ####NOT USEFUL. ONLY ONE MEASUREMENT PER WEEK####
-weather.cast$rain.days<-rainy.days(weather.cast$precip,weather.cast$week)
-
 #precipitation accumulation over the growing season
 #starting March 1
 weather.cast$precip.accum<-accum.precip.time(weather.cast$precip,weather.cast$doy,60)
@@ -234,19 +225,34 @@ data<-merge(aphid.all,weather.cast,by=c("site.id","year","doy"),all.x=T)
 ##Start building models##
 
 #fit quadratic term
-data$dd.acum2<-(data$dd.acum)^2
+#data$dd.acum2<-(data$dd.acum)^2
 
 #fit model
-aphid_model<-glm(captures~dd.acum+dd.acum2, 
+aphid.model<- lm(captures~dd.acum+I(dd.acum^2),data=data[which(data$year==2006 & data$site.id=="ACRE"),])
+#generate range of 50 numbers starting from 30 and ending at 160
+xx <- seq(6,2000, length=50)
+plot(captures~dd.acum,pch=19,ylim=c(0,500),data=data[which(data$year==2006 & data$site.id=="ACRE"),])
+lines(xx, predict(aphid.model, data.frame(dd.acum=xx)), col="red",lwd=4)
+
+##
+data$year<-as.factor(data$year)
+data<-data.table(data)
+peaks<-data[,list(peak=optimize(function(x, coefs) as.numeric(c(1, x, x^2) %*% coefs) 
+                                 ,coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD)),
+                                interval=c(6,2500),maximum=T)[1]),by=c("site.id","year")]
+
+##
+aphid_model<-glm(captures~dd.acum+dd.acum2*year, 
                data=data, family=poisson)
 summary(aphid_model)
 
 #extract the coefficients from model
-data<-data.table(data)
-test<-data[,list(var=rownames(summary(aphid_model)$coefficients),coef=summary(glm(captures~dd.acum+dd.acum2,family=poisson))$coefficients[,1], error=summary(glm(captures~dd.acum+dd.acum2,family=poisson))$coefficients[,2]),by=c("site.id","year")]
+coefs<-data[,list(var=rownames(summary(aphid_model)$coefficients),coef=summary(aphid_model)$coefficients[,1], error=summary(aphid_model)$coefficients[,2]),by=c("site.id")]
 
-coef<-as.data.frame(summary(aphid_model)$coefficients)
-coef<-coef[,1:2]
+coefs<-coefs[!grepl(":", coefs$var),]
+
+coef.melt<-melt(coefs,id=c("site.id","var"))
+coef.cast<-dcast(coef.melt,site.id~var+variable, value.var="value")
 
 ddcoef<-coef$Estimate[2]
 dd2coef<-coef$Estimate[3]
@@ -274,3 +280,16 @@ peaks$peak<- -ddcoef/(2*(dd2coef+yearcoef))
 #relative to each variable myself!
 peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
                        (ddcoef/(2*(dd2coef+yearcoef))^2)^2*(dd2coef.err^2+yearcoef.err^2))
+
+
+##AUC
+func<-expression(a + b*x + c*x^2)
+
+data[,
+list(a =coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[1],
+b = coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[2],
+c = coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[3],
+integrate(func)),by=c("site.id","year")]
+
+
+
