@@ -132,51 +132,6 @@ aphid.first<-as.data.frame(aphid.cut %>% group_by(Year,Site,Aphid.Species) %>% s
 #looking across all aphid species ####WE WILL NEED THIS LATTER####
 aphid.all<-aggregate(Captures~Year+Date+Site,data=aphid,sum)
 
-fit4.2005<- lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==2005,])
-#generate range of 50 numbers starting from 30 and ending at 160
-xx <- seq(90,360, length=50)
-plot(Captures~Date,pch=19,ylim=c(0,500),data=aphid.all[aphid.all$Year==2005,])
-lines(xx, predict(fit4.2005, data.frame(Date=xx)), col="red",lwd=4)
-
-##
-fits <- fit4.2005$fitted.values
-
-aphid.all.2005<-aphid.all[aphid.all$Year==2005,]
-fit.df <- as.data.frame(cbind(aphid.all.2005$Date, aphid.all.2005$Captures, fits))
-##
-fn <- function(x, coefs) as.numeric(c(1, x, x^2, x^3 ,x^4) %*% coefs) 
-
-sol<-optimize(fn, coef(fit4.2005), interval=c(150,320),maximum=T)
-
-dfdx <- D(D( expression(a + b*x + c*x^2 + d*x^3 + e*x^4), "x"),"x" )
-
-a <- coef(fit4.2005)[1] 
-b <- coef(fit4.2005)[2] 
-c <- coef(fit4.2005)[3] 
-d <- coef(fit4.2005)[4] 
-e <- coef(fit4.2005)[5]
-x <- sol$maximum 
-eval(dfdx)
-
-#same as above but for just one site
-fit4.2005.2<- lm(Captures~poly(Date,2,raw=TRUE),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
-
-#generate range of 50 numbers starting from 30 and ending at 160
-xx <- seq(90,360, length=50)
-plot(Captures~Date,pch=19,ylim=c(0,500),data=aphid.all[which(aphid.all$Year==2005 & aphid.all$Site=="ACRE"),])
-lines(xx, predict(fit4.2005.2, data.frame(Date=xx)), col="red",lwd=4)
-
-sol2<-optimize(fn, coef(fit4.2005.2), interval=c(150,320),maximum=T)
-
-##
-par(mfrow=c(3,3))
-for(i in 2005:2013){
-  xx <- seq(40,360, length=50)
-  plot(Captures~Date,pch=19,ylim=c(0,800),data=aphid.all[aphid.all$Year==i,])
-  lines(xx, predict(lm(Captures~poly(Date,4,raw=TRUE),data=aphid.all[aphid.all$Year==i,]),
-                    data.frame(Date=xx)), col="red",lwd=4)
-}
-
 ##degree day accumulation##
 #load in weather data
 weather<-read.csv("https://ndownloader.figshare.com/files/8448380")
@@ -228,68 +183,61 @@ data<-merge(aphid.all,weather.cast,by=c("site.id","year","doy"),all.x=T)
 #data$dd.acum2<-(data$dd.acum)^2
 
 #fit model
-aphid.model<- lm(captures~dd.acum+I(dd.acum^2),data=data[which(data$year==2006 & data$site.id=="ACRE"),])
+aphid.model<- lm(captures~dd.acum+I(dd.acum^2),data=data[which(data$year==2005 & data$site.id=="ACRE"),])
 #generate range of 50 numbers starting from 30 and ending at 160
 xx <- seq(6,2000, length=50)
-plot(captures~dd.acum,pch=19,ylim=c(0,500),data=data[which(data$year==2006 & data$site.id=="ACRE"),])
+plot(captures~dd.acum,pch=19,ylim=c(0,500),data=data[which(data$year==2005 & data$site.id=="ACRE"),])
 lines(xx, predict(aphid.model, data.frame(dd.acum=xx)), col="red",lwd=4)
 
 ##
 data$year<-as.factor(data$year)
-data<-data.table(data)
-peaks<-data[,list(peak=optimize(function(x, coefs) as.numeric(c(1, x, x^2) %*% coefs) 
-                                 ,coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD)),
-                                interval=c(6,2500),maximum=T)[1]),by=c("site.id","year")]
 
-##
-aphid_model<-glm(captures~dd.acum+dd.acum2*year, 
-               data=data, family=poisson)
-summary(aphid_model)
+##remove observations before April 15 and after September 30
+data<-data[!which(data$doy<105 | data$doy>273),]
 
-#extract the coefficients from model
-coefs<-data[,list(var=rownames(summary(aphid_model)$coefficients),coef=summary(aphid_model)$coefficients[,1], error=summary(aphid_model)$coefficients[,2]),by=c("site.id")]
+##remove years and sites with less than 6 observations
+data<-data %>% group_by(site.id,year) %>% filter(n()>= 6) %>% ungroup()
+data<-data.table(data)#use data.table class
 
-coefs<-coefs[!grepl(":", coefs$var),]
+#peak function
+argmax <- function(x, y, w=3, ...) {
+  require(zoo)
+  n <- length(y)
+  y.smooth <- loess(y ~ x, span=.25,...)$fitted
+  y.max <- rollapply(zoo(y.smooth), 2*w+1, max, align="center")
+  delta <- y.max - y.smooth[-c(1:w, n+1-1:w)]
+  i.max <- which(delta <= 0) + w
+  list(x=x[i.max], i=i.max, y.hat=y.smooth)
+}
 
-coef.melt<-melt(coefs,id=c("site.id","var"))
-coef.cast<-dcast(coef.melt,site.id~var+variable, value.var="value")
+##calculate peaks
+peaks<- data[,list(peak=argmax(.SD$dd.acum,.SD$captures)$x),by=c("site.id","year")]
+#Some site x years have multiple peaks. Need to work on this.
 
-ddcoef<-coef$Estimate[2]
-dd2coef<-coef$Estimate[3]
-ddcoef.err<-coef$"Std. Error"[2]
-dd2coef.err<-coef$"Std. Error"[3]
+##add rainfall data
 
-#create a vector of years
-year<-(2005:2013)
+#find the week each peak was in
+data$week<-isoweek(data$date)
 
-#create vector of coefficients
-#2005 is the 'intercept' vector. Give it a year 
-#modifier and error of zero
+weeks<-c()
+for (i in 1:length(peaks$year)){
+  #set an arbitrariliy high 'last week' dd caccumulation so the first condition is never
+  #met in the first iteration for each year
+  ddlastweek<-10000
+  for(j in 1:length(data$year)){
+    if ((peaks$year[i]==data$year[j])&
+        (peaks$site.id[i]%in%data$site.id[j])&
+        (peaks$peak[i]>ddlastweek)&
+        (peaks$peak[i]<data$dd.acum[j])){
+      week<-data$week[j]
+      weeks<-c(weeks, week)
+      break
+    }
+    else{
+      ddlastweek<-data$dd.acum[j]
+    }
+  }
+}
 
-yearcoef<-c(0, coef$Estimate[24:34])
-yearcoef.err<-c(0, coef$"Std. Error"[24:34])
-
-#create a new data frame to integrate the coeficients with the year vector
-peaks<-as.data.frame(cbind(year, yearcoef, yearcoef.err))
-
-#peak will occur at -ddcoeficient/(2(dd2coeficient+year coeficient))
-peaks$peak<- -ddcoef/(2*(dd2coef+yearcoef))
-
-#peak error calculated using the general error propagation formula
-#this will be a bit inelegant, but I calculated the partial derrivatives 
-#relative to each variable myself!
-peaks$peak.err<-sqrt((2*(dd2coef+yearcoef))^(-2) *ddcoef.err^2+
-                       (ddcoef/(2*(dd2coef+yearcoef))^2)^2*(dd2coef.err^2+yearcoef.err^2))
-
-
-##AUC
-func<-expression(a + b*x + c*x^2)
-
-data[,
-list(a =coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[1],
-b = coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[2],
-c = coef(lm(captures~dd.acum+I(dd.acum^2),data=.SD))[3],
-integrate(func)),by=c("site.id","year")]
-
-
-
+#put it into our peak object
+peaks$week<-weeks
