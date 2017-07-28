@@ -1,14 +1,20 @@
+# CDL variable rename, data reduction, and data merge code snip
+# Bvd, July 2017
+# This snip of code will sum similar landcover types, relabel the variables with descriptive names, and append the resulting variables to the aphid data
+
 library(cdlTools)
 
+# Naming and summing ####
+
 # What landcovers are we dealing with? Let's build a convient key for the codes from the data.
-cdl <- read.csv2("https://raw.githubusercontent.com/ReproducibleQM/sapsuckRz/master/Data/cdl_landcover_data.csv", sep=",", check.names = F, 
+cdl <- read.csv2("https://raw.githubusercontent.com/ReproducibleQM/sapsuckRz/master/Data/cdl_landcover_data_1pt5k.csv", sep=",", check.names = F, 
                  na.strings = "0.0")
 landtypes <- colnames(cdl)
 landcodes <- updateNamesCDL(landtypes)
 
 codekey <- data.frame(landtypes,landcodes)
-view(codekey) #This dataframe lists all of the lables for the various codes we have. All of the codes presented have a "non-zero" presence near 
-              #a site for at least one year, so all codes must be accounted for.
+View(codekey) #This dataframe lists all of the lables for the various codes we have. All of the codes presented have a "non-zero" presence near 
+#a site for at least one year, so all codes must be accounted for.
 
 # Now let's remove all the dumb NA's and replace them with zeros.
 for(i in 4:108){
@@ -50,3 +56,36 @@ for(j in 1:length(cdl)){
 }
 #Great! Now we just need to remove the initial numerically titled variables and we're good to go.
 cdl_sort <- cdl[,c('ID','State','Year','for_con','for_dec','for_mix','forest','ag_corn','ag_beans','ag_wheat','ag_smgrains','ag_other','ag','wet','urb','water','other')]
+
+rm(cdl, codekey)
+
+# Merging by site and year ####
+
+library(data.table)
+
+# load in aphid data
+# Using fread in the data.table package because this file is quite large
+aphid<-fread("https://dl.dropboxusercontent.com/u/98197254/Mastersuction_may29_2014.csv")
+
+# Pull the 10 most common species
+# find the average number of captures for each species
+aphid.ag<-aggregate(Captures~Aphid.Species,data=aphid,sum)
+# order data from most number of captures to least
+aphid.ord<-aphid.ag[order(-aphid.ag$Captures),] 
+# make a list of the 10 most common species
+aphid.names.cut<-aphid.ord$Aphid.Species[1:25]
+# cut down the data to only include those 10 species
+aphid.cut<-aphid[aphid$Aphid.Species%in%aphid.names.cut]
+
+# add a (crude) time variable
+aphid.cut$time<-((aphid.cut$Year-2005)*365)+aphid.cut$Date
+
+# clean up
+rm(aphid, aphid.ag, aphid.ord, aphid.names.cut)
+
+aphid.cdl <- aphid.cut[aphid.cut$Year %in% unique(cdl_sort$Year)] # remove years w/ no CDL data
+cdl_sort$Site <- as.character(cdl_sort$ID)
+cdl_sort$ID <- NULL
+cdl_sort$State <- as.character(cdl_sort$State)
+
+aphids <- merge(aphid.cdl, cdl_sort, by = c('Year', 'Site'), all = TRUE)
