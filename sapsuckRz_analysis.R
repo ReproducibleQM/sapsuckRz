@@ -193,17 +193,17 @@ lines(xx, predict(aphid.model, data.frame(dd.acum=xx)), col="red",lwd=4)
 data$year<-as.factor(data$year)
 
 ##remove observations before April 15 and after September 30
-data<-data[!which(data$doy<105 | data$doy>273),]
+data<-data[which(data$doy>=105 | data$doy<=273),]
 
 ##remove years and sites with less than 6 observations
-data<-data %>% group_by(site.id,year) %>% filter(n()>= 6) %>% ungroup()
+data<-data %>% group_by(site.id,year) %>% filter(n()>= 7) %>% ungroup()
 data<-data.table(data)#use data.table class
 
 #peak function
 argmax <- function(x, y, w=3, ...) {
   require(zoo)
   n <- length(y)
-  y.smooth <- loess(y ~ x, span=.25,...)$fitted
+  y.smooth <- loess(y ~ x, span=.5,...)$fitted
   y.max <- rollapply(zoo(y.smooth), 2*w+1, max, align="center")
   delta <- y.max - y.smooth[-c(1:w, n+1-1:w)]
   i.max <- which(delta <= 0) + w
@@ -221,23 +221,18 @@ data$week<-isoweek(data$date)
 
 weeks<-c()
 for (i in 1:length(peaks$year)){
-  #set an arbitrariliy high 'last week' dd caccumulation so the first condition is never
-  #met in the first iteration for each year
-  ddlastweek<-10000
-  for(j in 1:length(data$year)){
-    if ((peaks$year[i]==data$year[j])&
-        (peaks$site.id[i]%in%data$site.id[j])&
-        (peaks$peak[i]>ddlastweek)&
-        (peaks$peak[i]<data$dd.acum[j])){
-      week<-data$week[j]
-      weeks<-c(weeks, week)
-      break
-    }
-    else{
-      ddlastweek<-data$dd.acum[j]
-    }
-  }
+  #pull out data for that year
+  year.subset<-data[which(data$year==peaks$year[i]),]
+  #pull out data for that site
+  year.site.subset<-year.subset[which(year.subset$site.id==peaks$site.id[i]),]
+  #ditch rows that occur after the peak DD accum
+  over.dd.subset<-year.site.subset[which(year.site.subset$dd.acum<peaks$peak[i]),]
+  #the last week in the data is the week the peak occurs in
+  weeki<-max(over.dd.subset$week)
+  #concatenate this value to the weeks vector
+  weeks<-c(weeks, weeki)
 }
+peaks$week<-weeks
 
 #put it into our peak object
 peaks$week<-weeks
