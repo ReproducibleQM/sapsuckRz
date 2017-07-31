@@ -7,6 +7,9 @@ library(vegan)
 library(dplyr)
 library(reshape2)
 library(lubridate)
+library(lme4)
+library(r2glmm)
+library(car)
 source("custom_functions.r")
 
 ##load in aphid data
@@ -236,3 +239,21 @@ peaks$week<-weeks
 
 #put it into our peak object
 peaks$week<-weeks
+
+#merge peaks and data file
+data<-merge(data,peaks,by=c("site.id","year","week"),all=T)
+
+##Add in landcover data##
+
+
+##Analyze some data!!!
+mod1<-lmer(peak~precip.accum+(1|site.id)+(1|year),data=data)
+Anova(mod1,type=3) #car
+
+ggplot(data, aes(x = precip.accum, y = peak))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  annotate("text",label="p>0.001",x=190,y=1920,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
+  labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
+  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
