@@ -10,6 +10,7 @@ library(lubridate)
 library(lme4)
 library(r2glmm)
 library(car)
+library(mgcv)
 source("custom_functions.r")
 
 ##load in aphid data
@@ -256,7 +257,7 @@ cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
 data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##Analyze some data!!!
-mod1<-lmer(peak~precip.accum+forest+urb+(1|site.id)+(1|year),data=data)
+mod1<-lmer(peak~precip.accum+forest+urb+lat+long+(1|site.id)+(1|year),data=data)
 Anova(mod1,type=3) #car
 
 ggplot(data, aes(x = precip.accum, y = peak))+
@@ -273,12 +274,17 @@ weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
 data.total<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
 data.total<-merge(data.total,cdl.cut,by=c("site.id","year"),all.x=T)
 
+data.total<-merge(data.total,coords,by="site.id",all.x=T)
+
 #model
-mod2<-lmer(captures~precip.accum+dd.acum+forest+urb+(1|site.id)+(1|year),data=data.total)
+mod2<-glmer(captures~precip.accum+dd.acum+forest+urb+ag+(1|site.id)+(1|year),data=data.total,family="poisson")
 Anova(mod2,type=3)
 
 mod3<-lmer(captures~dd.acum+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.total)
 Anova(mod3,type=3)
+
+mod4<-lmer(captures~dd.acum+ag+(1|site.id)+(1|year),data=data.total)
+Anova(mod4,type=3)
 
 #plots
 ggplot(data.total, aes(x = dd.acum, y = captures))+
@@ -298,3 +304,16 @@ ggplot(data.total, aes(x = forest, y = captures))+
   #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
   labs(x = "Landscape forest cover", y = "Total aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+
+#more complicated model
+coords<-read.csv("Data/counties+coordinates2.csv")
+coords<-coords[,1:3]
+colnames(coords)<-c("site.id","lat","long")
+data<-merge(data,coords,by="site.id",all.x=T)
+
+mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
+summary(mod.gam1)
+
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+summary(mod.gam2)
+
