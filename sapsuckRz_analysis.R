@@ -244,10 +244,19 @@ peaks$week<-weeks
 data<-merge(data,peaks,by=c("site.id","year","week"),all=T)
 
 ##Add in landcover data##
+cdl<-read.csv("Data/cdl.csv")
+cdl.cut<-cdl[,c(2:3,42:50)]
+colnames(cdl.cut)[1]<-"year"
+colnames(cdl.cut)[2]<-"site.id"
 
+#add in landscape data
+cdl.cut$year<-as.factor(cdl.cut$year)
+data$site.id<-as.factor(data$site.id)
+cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
+data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##Analyze some data!!!
-mod1<-lmer(peak~precip.accum+(1|site.id)+(1|year),data=data)
+mod1<-lmer(peak~precip.accum+forest+urb+(1|site.id)+(1|year),data=data)
 Anova(mod1,type=3) #car
 
 ggplot(data, aes(x = precip.accum, y = peak))+
@@ -258,3 +267,34 @@ ggplot(data, aes(x = precip.accum, y = peak))+
   labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 
+##total aphid abundance
+aphid.total<-aggregate(captures~year+site.id,data=aphid.all,sum)
+weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
+data.total<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
+data.total<-merge(data.total,cdl.cut,by=c("site.id","year"),all.x=T)
+
+#model
+mod2<-lmer(captures~precip.accum+dd.acum+forest+urb+(1|site.id)+(1|year),data=data.total)
+Anova(mod2,type=3)
+
+mod3<-lmer(captures~dd.acum+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.total)
+Anova(mod3,type=3)
+
+#plots
+ggplot(data.total, aes(x = dd.acum, y = captures))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  annotate("text",label="p=0.03",x=1700,y=20000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
+  labs(x = "Degree day accumulation", y = "Total aphid abundance")+
+  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+
+
+#plots
+ggplot(data.total, aes(x = forest, y = captures))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  annotate("text",label="p=0.02",x=10,y=20000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
+  labs(x = "Landscape forest cover", y = "Total aphid abundance")+
+  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
