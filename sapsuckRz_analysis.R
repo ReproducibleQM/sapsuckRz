@@ -257,3 +257,4 @@ ggplot(data, aes(x = precip.accum, y = peak))+
   annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
   labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+
