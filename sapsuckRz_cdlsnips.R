@@ -140,6 +140,9 @@ cdl_1pt5_sort <- cdl_1pt5[,c('ID','State','Year','for_con','for_dec','for_mix','
 
 library(data.table)
 
+cdl_sites <- merge(cdl_75_sort, cdl_10_sort, by = c("ID", "State", "Year"), suffixes = c("75", "10"))
+cdl_sites <- merge(cdl, cdl_75_sort, by = c("ID", "State", "Year"))
+
 # load in aphid data
 # Using fread in the data.table package because this file is quite large
 aphid<-fread("https://dl.dropboxusercontent.com/u/98197254/Mastersuction_may29_2014.csv")
