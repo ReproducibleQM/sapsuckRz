@@ -256,8 +256,12 @@ data$site.id<-as.factor(data$site.id)
 cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
 data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 
+#rescale data
+data.scale2<-scale(data[,c(9:12,14:22)],center=F,scale=T)
+data.scale2<-cbind(data[,c(1:8,13,23:24)],data.scale2)
+
 ##Analyze some data!!!
-mod1<-lmer(peak~precip.accum+forest+urb+lat+long+(1|site.id)+(1|year),data=data)
+mod1<-lmer(peak~precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale2)
 Anova(mod1,type=3) #car
 
 tiff("peak_precip.tiff",width = 4200, height = 4200, units = "px", res = 600)
@@ -325,13 +329,48 @@ data<-merge(data,coords,by="site.id",all.x=T)
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
 summary(mod.gam2)
+
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+
 #The spatial smoother doesn't seem to matter
 
+logLik(mod.gam2)
+logLik(mod.gam3)
+
+stat <- as.numeric(2 * (logLik(mod.gam2) - logLik(mod.gam3)))
+pchisq(stat, df = 33.97 - 25.16, lower.tail = FALSE)
+
 #effects plots
-sjp.setTheme(base = theme_bw()) 
-             
-sjp.glmer(mod2, 
-          type = "fe", 
-          sort = TRUE)
+cc <- confint(mod1,parm="beta_")
+ctab <- as.data.frame(cbind(est=fixef(mod1),cc))
+colnames(ctab)<-c("est","lower","upper")
+
+tiff("peak_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(ctab,aes(x=rownames(ctab),y=est))+
+  geom_point()+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1,position=position_dodge(0.1))+
+  scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Landscape\nforest cover","Precipitation\naccumulation"))+
+  geom_hline(yintercept=0,linetype="dashed")+
+  labs(x = "", y = "Effect size")+
+  ggtitle("Peak aphid abundance")+
+  coord_flip()+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+dd <- confint(mod2,parm="beta_",method="Wald")
+dtab <- as.data.frame(cbind(est=fixef(mod2),dd))
+colnames(dtab)<-c("est","lower","upper")
+
+tiff("abund_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(dtab,aes(x=rownames(dtab),y=est))+
+  geom_point()+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1,position=position_dodge(0.1))+
+  scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Degree day\naccumulation","Landscape\nforest cover","Precipitation\naccumulation"))+
+  geom_hline(yintercept=0,linetype="dashed")+
+  labs(x = "", y = "Effect size")+
+  ggtitle("Total aphid abundance")+
+  coord_flip()+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
