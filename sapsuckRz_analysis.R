@@ -246,7 +246,7 @@ data<-merge(data,peaks,by=c("site.id","year","week"),all=T)
 
 ##Add in landcover data##
 cdl<-read.csv("Data/cdl.csv")
-cdl.cut<-cdl[,c(2:3,42:50)]
+cdl.cut<-cdl[,c(2:3,11:50)]
 colnames(cdl.cut)[1]<-"year"
 colnames(cdl.cut)[2]<-"site.id"
 
@@ -263,9 +263,9 @@ Anova(mod1,type=3) #car
 ggplot(data, aes(x = precip.accum, y = peak))+
   geom_point(size=2)+
   geom_smooth(method="lm",size=2,color="red",se=F)+
-  annotate("text",label="p>0.001",x=190,y=1920,size=5)+
-  annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
-  labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
+  annotate("text",label="p<0.001",x=190,y=1920,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.598\")",x=200,y=2000,parse = TRUE,size=5)+
+  labs(x = "Precipitation accumulation", y = "Peak aphid abundance (degree days)")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 
 ##total aphid abundance
@@ -300,20 +300,39 @@ ggplot(data.total, aes(x = dd.acum, y = captures))+
 ggplot(data.total, aes(x = forest, y = captures))+
   geom_point(size=2)+
   geom_smooth(method="lm",size=2,color="red",se=F)+
-  annotate("text",label="p=0.02",x=10,y=20000,size=5)+
-  #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
-  labs(x = "Landscape forest cover", y = "Total aphid abundance")+
+  annotate("text",label="p<0.001",x=40,y=20000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.443\")",x=40,y=19000,parse = TRUE,size=5)+
+  labs(x = "% Landscape forest cover", y = "Total aphid captures")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+
+ggplot(data.total, aes(x = ag, y = captures))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  annotate("text",label="p<0.001",x=40,y=20000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.443\")",x=40,y=19000,parse = TRUE,size=5)+
+  labs(x = "% Landscape cultivated cover", y = "Total aphid captures")+
+  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+
 
 #more complicated model
 coords<-read.csv("Data/counties+coordinates2.csv")
 coords<-coords[,1:3]
 colnames(coords)<-c("site.id","lat","long")
 data<-merge(data,coords,by="site.id",all.x=T)
+data.total <- merge(data.total,coords,by="site.id",all.x=T)
 
-mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
+mod.gam1<-gam(peak ~ precip.accum+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
 summary(mod.gam2)
+
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_beans+ag_wheat+forest+wet+urb+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+summary(mod.gam3)
+
+mod.gam4<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag+ag10+ag75+forest+forest10+forest75+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+summary(mod.gam4)
+
+mod.gam5<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_beans+ag_wheat+forest+wet+urb+ag_corn10+ag_beans10+ag_wheat10+forest10+wet10+urb10+ag_corn75+ag_beans75+ag_wheat75+forest75+wet75+urb75+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+summary(mod.gam5)
 
