@@ -256,6 +256,12 @@ data$site.id<-as.factor(data$site.id)
 cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
 data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 
+#adding lat long
+coords<-read.csv("Data/counties+coordinates2.csv")
+coords<-coords[,1:3]
+colnames(coords)<-c("site.id","lat","long")
+data<-merge(data,coords,by="site.id",all.x=T)
+
 #rescale data
 data.scale2<-scale(data[,c(9:12,14:22)],center=F,scale=T)
 data.scale2<-cbind(data[,c(1:8,13,23:24)],data.scale2)
@@ -320,12 +326,7 @@ ggplot(data.scale, aes(x = dd.acum, y = captures))+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
-#more complicated model adding spatial smoother for lat long
-coords<-read.csv("Data/counties+coordinates2.csv")
-coords<-coords[,1:3]
-colnames(coords)<-c("site.id","lat","long")
-data<-merge(data,coords,by="site.id",all.x=T)
-
+#GAM to add lat long spatial smoother
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
@@ -349,8 +350,8 @@ colnames(ctab)<-c("est","lower","upper")
 
 tiff("peak_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
 ggplot(ctab,aes(x=rownames(ctab),y=est))+
-  geom_point()+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1,position=position_dodge(0.1))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.2,position=position_dodge(0.1))+
   scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Landscape\nforest cover","Precipitation\naccumulation"))+
   geom_hline(yintercept=0,linetype="dashed")+
   labs(x = "", y = "Effect size")+
@@ -365,8 +366,8 @@ colnames(dtab)<-c("est","lower","upper")
 
 tiff("abund_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
 ggplot(dtab,aes(x=rownames(dtab),y=est))+
-  geom_point()+
-  geom_errorbar(aes(ymin=lower, ymax=upper), width=.1,position=position_dodge(0.1))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.2,position=position_dodge(0.1))+
   scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Degree day\naccumulation","Landscape\nforest cover","Precipitation\naccumulation"))+
   geom_hline(yintercept=0,linetype="dashed")+
   labs(x = "", y = "Effect size")+
