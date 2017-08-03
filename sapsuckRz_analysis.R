@@ -260,13 +260,15 @@ data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 mod1<-lmer(peak~precip.accum+forest+urb+lat+long+(1|site.id)+(1|year),data=data)
 Anova(mod1,type=3) #car
 
+tiff("peak_precip.tiff",width = 4200, height = 4200, units = "px", res = 600)
 ggplot(data, aes(x = precip.accum, y = peak))+
   geom_point(size=2)+
   geom_smooth(method="lm",size=2,color="red",se=F)+
-  annotate("text",label="p>0.001",x=190,y=1920,size=5)+
-  annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
+  annotate("text",label="p>0.001",x=190,y=1720,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=1800,parse = TRUE,size=5)+
   labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
 
 ##total aphid abundance
 aphid.total<-aggregate(captures~year+site.id,data=aphid.all,sum)
@@ -274,38 +276,47 @@ weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
 data.total<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
 data.total<-merge(data.total,cdl.cut,by=c("site.id","year"),all.x=T)
 
+#rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
 data.total<-merge(data.total,coords,by="site.id",all.x=T)
+data.scale<-scale(data.total[,9:20],center=F,scale=T)
+data.scale<-cbind(data.total[,1:8],data.scale,data.total[,21:22])
 
 #model
-mod2<-glmer(captures~precip.accum+dd.acum+forest+urb+ag+(1|site.id)+(1|year),data=data.total,family="poisson")
+mod.pos<-glmer(captures~dd.acum+precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale,family=poisson)
 Anova(mod2,type=3)
 
-mod3<-lmer(captures~dd.acum+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.total)
-Anova(mod3,type=3)
+#Function for checking for overdispersion
+overdisp_fun <- function(model) {
+  vpars <- function(m) {
+    nrow(m)*(nrow(m)+1)/2
+  }
+  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+  rdf <- nrow(model.frame(model))-model.df
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
 
-mod4<-lmer(captures~dd.acum+ag+(1|site.id)+(1|year),data=data.total)
-Anova(mod4,type=3)
+overdisp_fun(mod.pos)
+
+##
+mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale)
+Anova(mod2,type=3)
 
 #plots
-ggplot(data.total, aes(x = dd.acum, y = captures))+
+tiff("captures_dd.acum.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(data.scale, aes(x = dd.acum, y = captures))+
   geom_point(size=2)+
-  geom_smooth(method="lm",size=2,color="red",se=F)+
-  annotate("text",label="p=0.03",x=1700,y=20000,size=5)+
-  #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
+  stat_function(fun=function(x)exp(fixef(mod2)[1] + fixef(mod2)[2]*x),size=2,color="red")+
+  annotate("text",label="p=0.03",x=.865,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.22\")",x=.87,y=20000,parse = TRUE,size=5)+
   labs(x = "Degree day accumulation", y = "Total aphid abundance")+
-  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
 
-
-#plots
-ggplot(data.total, aes(x = forest, y = captures))+
-  geom_point(size=2)+
-  geom_smooth(method="lm",size=2,color="red",se=F)+
-  annotate("text",label="p=0.02",x=10,y=20000,size=5)+
-  #annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=2000,parse = TRUE,size=5)+
-  labs(x = "Landscape forest cover", y = "Total aphid abundance")+
-  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
-
-#more complicated model
+#more complicated model adding spatial smoother for lat long
 coords<-read.csv("Data/counties+coordinates2.csv")
 coords<-coords[,1:3]
 colnames(coords)<-c("site.id","lat","long")
@@ -316,4 +327,11 @@ summary(mod.gam1)
 
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
 summary(mod.gam2)
+#The spatial smoother doesn't seem to matter
 
+#effects plots
+sjp.setTheme(base = theme_bw()) 
+             
+sjp.glmer(mod2, 
+          type = "fe", 
+          sort = TRUE)
