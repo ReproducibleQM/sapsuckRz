@@ -276,7 +276,7 @@ ggplot(data, aes(x = precip.accum, y = peak))+
   geom_smooth(method="lm",size=2,color="red",se=F)+
   annotate("text",label="p>0.001",x=190,y=1720,size=5)+
   annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=1800,parse = TRUE,size=5)+
-  labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
+  labs(x = "Precipitation accumulation (mm)", y = "Degree day at peak aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
@@ -312,7 +312,7 @@ overdisp_fun <- function(model) {
 overdisp_fun(mod.pos)
 
 ##
-mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale)
+mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.scale)
 Anova(mod2,type=3)
 
 #plots
@@ -320,9 +320,9 @@ tiff("captures_dd.acum.tiff",width = 4200, height = 4200, units = "px", res = 60
 ggplot(data.scale, aes(x = dd.acum, y = captures))+
   geom_point(size=2)+
   stat_function(fun=function(x)exp(fixef(mod2)[1] + fixef(mod2)[2]*x),size=2,color="red")+
-  annotate("text",label="p=0.03",x=.865,y=21000,size=5)+
-  annotate("text",label="paste(R ^ 2, \" = 0.22\")",x=.87,y=20000,parse = TRUE,size=5)+
-  labs(x = "Degree day accumulation", y = "Total aphid abundance")+
+  annotate("text",label="p<0.001",x=.865,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.31\")",x=.865,y=20000,parse = TRUE,size=5)+
+  labs(x = "Degree day accumulation", y = "Total aphid abundance\n(# of captures)")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
@@ -330,10 +330,34 @@ dev.off()
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
 summary(mod.gam2)
 
 mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+
+mod.corn<-glmer.nb(captures~ag_corn++(1|site.id)+(1|year),data=data.scale)
+
+tiff("captures_corn.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(data.scale, aes(x = ag_corn, y = captures))+
+  geom_point(size=2)+
+  stat_function(fun=function(x)exp(fixef(mod.corn)[1] + fixef(mod.corn)[2]*x),size=2,color="red")+
+  annotate("text",label="p=0.002",x=.2,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.29\")",x=.2,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape corn cover", y = "Total aphid abundance\n(# of captures)")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+mod.wheat<-glmer.nb(captures~ag_wheat+(1|site.id)+(1|year),data=data.scale) #something weird going on here
+
+tiff("captures_wheat.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(data.scale, aes(x = ag_wheat, y = captures))+
+  geom_point(size=2)+
+  stat_function(fun=function(x)exp(fixef(mod.wheat)[1] + fixef(mod.wheat)[2]*x),size=2,color="red")+
+  annotate("text",label="p=0.01",x=.2,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.27\")",x=.3,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape wheat cover", y = "Total aphid abundance\n(# of captures)")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
 
 #The spatial smoother doesn't seem to matter
 
