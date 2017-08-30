@@ -256,8 +256,18 @@ data$site.id<-as.factor(data$site.id)
 cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
 data<-merge(data,cdl.cut,by=c("site.id","year"),all.x=T)
 
+#adding lat long
+coords<-read.csv("Data/counties+coordinates2.csv")
+coords<-coords[,1:3]
+colnames(coords)<-c("site.id","lat","long")
+data<-merge(data,coords,by="site.id",all.x=T)
+
+#rescale data
+data.scale2<-scale(data[,c(9:12,14:22)],center=F,scale=T)
+data.scale2<-cbind(data[,c(1:8,13,23:24)],data.scale2)
+
 ##Analyze some data!!!
-mod1<-lmer(peak~precip.accum+forest+urb+lat+long+(1|site.id)+(1|year),data=data)
+mod1<-lmer(peak~precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale2)
 Anova(mod1,type=3) #car
 
 tiff("peak_precip.tiff",width = 4200, height = 4200, units = "px", res = 600)
@@ -266,7 +276,7 @@ ggplot(data, aes(x = precip.accum, y = peak))+
   geom_smooth(method="lm",size=2,color="red",se=F)+
   annotate("text",label="p>0.001",x=190,y=1720,size=5)+
   annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=200,y=1800,parse = TRUE,size=5)+
-  labs(x = "Precipitation accumulation", y = "Peak aphid abundance")+
+  labs(x = "Precipitation accumulation (mm)", y = "Degree day at peak aphid abundance")+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
@@ -302,7 +312,7 @@ overdisp_fun <- function(model) {
 overdisp_fun(mod.pos)
 
 ##
-mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale)
+mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.scale)
 Anova(mod2,type=3)
 
 #plots
@@ -310,21 +320,17 @@ tiff("captures_dd.acum.tiff",width = 4200, height = 4200, units = "px", res = 60
 ggplot(data.scale, aes(x = dd.acum, y = captures))+
   geom_point(size=2)+
   stat_function(fun=function(x)exp(fixef(mod2)[1] + fixef(mod2)[2]*x),size=2,color="red")+
-  annotate("text",label="p=0.03",x=.865,y=21000,size=5)+
-  annotate("text",label="paste(R ^ 2, \" = 0.22\")",x=.87,y=20000,parse = TRUE,size=5)+
-  labs(x = "Degree day accumulation", y = "Total aphid abundance")+
+  annotate("text",label="p<0.001",x=.865,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.31\")",x=.865,y=20000,parse = TRUE,size=5)+
+  labs(x = "Degree day accumulation", y = "Total aphid abundance\n(# of captures)")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
-#more complicated model adding spatial smoother for lat long
-coords<-read.csv("Data/counties+coordinates2.csv")
-coords<-coords[,1:3]
-colnames(coords)<-c("site.id","lat","long")
-data<-merge(data,coords,by="site.id",all.x=T)
-
+#GAM to add lat long spatial smoother
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
+<<<<<<< HEAD
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
 summary(mod.gam2)
 
@@ -340,10 +346,47 @@ r.est <- cbind(Estimate = coef(mod.gam3), "Robust SE" = stderr.mod.gam3,
                LL = coef(mod.gam3) - 1.96*stderr.mod.gam3,
                UL = coef(mod.gam3) + 1.96*stderr.mod.gam3)
 r.est
+=======
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
+summary(mod.gam2)
+
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+
+mod.corn<-glmer.nb(captures~ag_corn++(1|site.id)+(1|year),data=data.scale)
+
+tiff("captures_corn.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(data.scale, aes(x = ag_corn, y = captures))+
+  geom_point(size=2)+
+  stat_function(fun=function(x)exp(fixef(mod.corn)[1] + fixef(mod.corn)[2]*x),size=2,color="red")+
+  annotate("text",label="p=0.002",x=.2,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.29\")",x=.2,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape corn cover", y = "Total aphid abundance\n(# of captures)")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+mod.wheat<-glmer.nb(captures~ag_wheat+(1|site.id)+(1|year),data=data.scale) #something weird going on here
+
+tiff("captures_wheat.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(data.scale, aes(x = ag_wheat, y = captures))+
+  geom_point(size=2)+
+  stat_function(fun=function(x)exp(fixef(mod.wheat)[1] + fixef(mod.wheat)[2]*x),size=2,color="red")+
+  annotate("text",label="p=0.01",x=.2,y=21000,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.27\")",x=.3,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape wheat cover", y = "Total aphid abundance\n(# of captures)")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+>>>>>>> origin/master
 
 #The spatial smoother doesn't seem to matter
 
+logLik(mod.gam2)
+logLik(mod.gam3)
+
+stat <- as.numeric(2 * (logLik(mod.gam2) - logLik(mod.gam3)))
+pchisq(stat, df = 33.97 - 25.16, lower.tail = FALSE)
+
 #effects plots
+<<<<<<< HEAD
 sjp.setTheme(base = theme_bw()) 
              
 sjp.glmer(mod2, 
@@ -419,3 +462,36 @@ summary(mod.gam2.rmaidis)
 mod.gam3.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
 summary(mod.gam3.rmaidis)
 
+=======
+cc <- confint(mod1,parm="beta_")
+ctab <- as.data.frame(cbind(est=fixef(mod1),cc))
+colnames(ctab)<-c("est","lower","upper")
+
+tiff("peak_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(ctab,aes(x=rownames(ctab),y=est))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.2,position=position_dodge(0.1))+
+  scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Landscape\nforest cover","Precipitation\naccumulation"))+
+  geom_hline(yintercept=0,linetype="dashed")+
+  labs(x = "", y = "Effect size")+
+  ggtitle("Peak aphid abundance")+
+  coord_flip()+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+dd <- confint(mod2,parm="beta_",method="Wald")
+dtab <- as.data.frame(cbind(est=fixef(mod2),dd))
+colnames(dtab)<-c("est","lower","upper")
+
+tiff("abund_effects.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(dtab,aes(x=rownames(dtab),y=est))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=lower, ymax=upper), width=.2,position=position_dodge(0.1))+
+  scale_x_discrete(labels=c("Intercept", "Landscape\ncrop cover","Degree day\naccumulation","Landscape\nforest cover","Precipitation\naccumulation"))+
+  geom_hline(yintercept=0,linetype="dashed")+
+  labs(x = "", y = "Effect size")+
+  ggtitle("Total aphid abundance")+
+  coord_flip()+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+>>>>>>> origin/master
