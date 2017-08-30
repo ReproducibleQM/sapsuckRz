@@ -325,8 +325,22 @@ data<-merge(data,coords,by="site.id",all.x=T)
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
 summary(mod.gam2)
+
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
+summary(mod.gam3)
+
+library(sandwich)
+
+cov.mod.gam3 <- vcovHC(mod.gam3, type = "HC0")
+stderr.mod.gam3 <- sqrt(diag(cov.mod.gam3))
+r.est <- cbind(Estimate = coef(mod.gam3), "Robust SE" = stderr.mod.gam3,
+               "pr(>|z|" = 2 * pnorm(abs(coef(mod.gam3)/stderr.mod.gam3), lower.tail = F),
+               LL = coef(mod.gam3) - 1.96*stderr.mod.gam3,
+               UL = coef(mod.gam3) + 1.96*stderr.mod.gam3)
+r.est
+
 #The spatial smoother doesn't seem to matter
 
 #effects plots
@@ -335,3 +349,73 @@ sjp.setTheme(base = theme_bw())
 sjp.glmer(mod2, 
           type = "fe", 
           sort = TRUE)
+
+
+####Disaggregate species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
+
+aphid.aglyc <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Aphis.glycines"], sum)
+aphid.rpadi <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Rhopalosiphum.padi"], sum)
+aphid.rmaidis <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Rhopalosiphum.maidis"], sum)
+
+colnames(aphid.aglyc) <- c("site.id","doy","year","captures")
+colnames(aphid.rpadi) <- c("site.id","doy","year","captures")
+colnames(aphid.rmaidis) <- c("site.id","doy","year","captures")
+
+#aglyc
+##total aphid abundance
+aphid.total.aglyc<-aggregate(captures~year+site.id,data=aphid.aglyc,sum)
+weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
+data.total.aglyc<-merge(aphid.total.aglyc,weather.max,by=c("site.id","year"),all.x=T)
+data.total.aglyc<-merge(data.total.aglyc,cdl.cut,by=c("site.id","year"),all.x=T)
+
+##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
+data.total.aglyc<-merge(data.total.aglyc,coords,by="site.id",all.x=T)
+data.scale.aglyc<-scale(data.total.aglyc[,9:51],center=F,scale=T)
+data.scale.aglyc<-cbind(data.total.aglyc[,1:8],data.scale.aglyc,data.total.aglyc[,52:53])
+
+#rpadi
+##total aphid abundance
+aphid.total.rpadi<-aggregate(captures~year+site.id,data=aphid.rpadi,sum)
+weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
+data.total.rpadi<-merge(aphid.total.rpadi,weather.max,by=c("site.id","year"),all.x=T)
+data.total.rpadi<-merge(data.total.rpadi,cdl.cut,by=c("site.id","year"),all.x=T)
+
+##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
+data.total.rpadi<-merge(data.total.rpadi,coords,by="site.id",all.x=T)
+data.scale.rpadi<-scale(data.total.rpadi[,9:51],center=F,scale=T)
+data.scale.rpadi<-cbind(data.total.rpadi[,1:8],data.scale.rpadi,data.total.rpadi[,52:53])
+
+#rmaidis
+##total aphid abundance
+aphid.total.rmaidis<-aggregate(captures~year+site.id,data=aphid.rmaidis,sum)
+weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
+data.total.rmaidis<-merge(aphid.total.rmaidis,weather.max,by=c("site.id","year"),all.x=T)
+data.total.rmaidis<-merge(data.total.rmaidis,cdl.cut,by=c("site.id","year"),all.x=T)
+
+##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
+data.total.rmaidis<-merge(data.total.rmaidis,coords,by="site.id",all.x=T)
+data.scale.rmaidis<-scale(data.total.rmaidis[,9:51],center=F,scale=T)
+data.scale.rmaidis<-cbind(data.total.rmaidis[,1:8],data.scale.rmaidis,data.total.rmaidis[,52:53])
+
+#Models! (The disaggregated ones)
+##aglyc
+mod.gam2.aglyc<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.aglyc,family="nb")
+summary(mod.gam2.aglyc)
+
+mod.gam3.aglyc<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.aglyc,family="nb")
+summary(mod.gam3.aglyc)
+
+#rpadi
+mod.gam2.rpadi<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rpadi,family="nb")
+summary(mod.gam2.rpadi)
+
+mod.gam3.rpadi<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rpadi,family="nb")
+summary(mod.gam3.rpadi)
+
+#rmaidis
+mod.gam2.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
+summary(mod.gam2.rmaidis)
+
+mod.gam3.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
+summary(mod.gam3.rmaidis)
+
