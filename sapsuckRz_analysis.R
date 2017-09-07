@@ -330,7 +330,7 @@ dev.off()
 mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re"), data = data)
 summary(mod.gam1)
 
-<<<<<<< HEAD
+
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
 summary(mod.gam2)
 
@@ -346,7 +346,7 @@ r.est <- cbind(Estimate = coef(mod.gam3), "Robust SE" = stderr.mod.gam3,
                LL = coef(mod.gam3) - 1.96*stderr.mod.gam3,
                UL = coef(mod.gam3) + 1.96*stderr.mod.gam3)
 r.est
-=======
+
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
 summary(mod.gam2)
 
@@ -375,7 +375,7 @@ ggplot(data.scale, aes(x = ag_wheat, y = captures))+
   labs(x = "% Landscape wheat cover", y = "Total aphid abundance\n(# of captures)")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
->>>>>>> origin/master
+
 
 #The spatial smoother doesn't seem to matter
 
@@ -386,7 +386,7 @@ stat <- as.numeric(2 * (logLik(mod.gam2) - logLik(mod.gam3)))
 pchisq(stat, df = 33.97 - 25.16, lower.tail = FALSE)
 
 #effects plots
-<<<<<<< HEAD
+
 sjp.setTheme(base = theme_bw()) 
              
 sjp.glmer(mod2, 
@@ -462,7 +462,42 @@ summary(mod.gam2.rmaidis)
 mod.gam3.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
 summary(mod.gam3.rmaidis)
 
-=======
+
+
+####Relative abund. by species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
+
+data.ratio.aglyc <- merge(data.scale.aglyc,data.scale[,c(1:3)],by = c("site.id","year"),suffixes = c("",".total"))
+data.ratio.aglyc$ratio <- data.ratio.aglyc$captures/data.ratio.aglyc$captures.total
+
+data.ratio.rpadi <- merge(data.scale.rpadi,data.scale[,c(1:3)],by = c("site.id","year"),suffixes = c("",".total"))
+data.ratio.rpadi$ratio <- data.ratio.rpadi$captures/data.ratio.rpadi$captures.total
+
+data.ratio.rmaidis <- merge(data.scale.rmaidis,data.scale[,c(1:3)],by = c("site.id","year"),suffixes = c("",".total"))
+data.ratio.rmaidis$ratio <- data.ratio.rmaidis$captures/data.ratio.rmaidis$captures.total
+
+#Models! (the ratio ones)
+##aglyc
+mod.gam2.aglyc.ratio<-gam(ratio ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.aglyc)
+summary(mod.gam2.aglyc.ratio)
+
+mod.gam3.aglyc.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.aglyc)
+summary(mod.gam3.aglyc.ratio)
+
+#rpadi
+mod.gam2.rpadi.ratio<-gam(ratio ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.rpadi)
+summary(mod.gam2.rpadi.ratio)
+
+mod.gam3.rpadi.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.rpadi)
+summary(mod.gam3.rpadi.ratio)
+
+#rmaidis
+mod.gam2.rmaidis.ratio<-gam(ratio ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.rmaidis)
+summary(mod.gam2.rmaidis.ratio)
+
+mod.gam3.rmaidis.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.rmaidis)
+summary(mod.gam3.rmaidis.ratio)
+
+##########################################
 cc <- confint(mod1,parm="beta_")
 ctab <- as.data.frame(cbind(est=fixef(mod1),cc))
 colnames(ctab)<-c("est","lower","upper")
@@ -494,4 +529,4 @@ ggplot(dtab,aes(x=rownames(dtab),y=est))+
   coord_flip()+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
->>>>>>> origin/master
+
