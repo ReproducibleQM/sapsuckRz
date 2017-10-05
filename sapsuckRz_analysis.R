@@ -15,7 +15,9 @@ source("custom_functions.r")
 
 ##load in aphid data
 #Using fread in the data.table package because this file is quite large
-aphid<-fread("https://dl.dropboxusercontent.com/u/98197254/Mastersuction_may29_2014.csv")
+aphid<-fread("https://ndownloader.figshare.com/files/9465745")
+aphid<-aphid[,-1]
+colnames(aphid)<-c("Year","State","Site","Date","Sex","Species","Captures")
 
 ##Pull the 10 most common species
 #find the average number of captures for each species
