@@ -499,6 +499,33 @@ summary(mod.gam2.rmaidis.ratio)
 mod.gam3.rmaidis.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.rmaidis)
 summary(mod.gam3.rmaidis.ratio)
 
+
+# Land Cover Non-linearity/Discontinuity Detection ####
+
+mod.gam.detect <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total,family=nb())
+data.total.detect <- subset(data.total, !is.na(ag_beans10))
+data.total.detect$resid <- mod.gam.detect$y - mod.gam.detect$fitted.values
+plot(data.total.detect$ag_corn10, data.total.detect$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+abline(mean(data.total.detect$resid),mod.gam3$coefficients[4])
+
+mod.gam.detect.aglyc <- gam(captures ~ precip.accum+dd.acum+ag_smgrains10+ag_corn10+forest10, data = data.total.aglyc,family=nb())
+data.total.detect.aglyc <- subset(data.total.aglyc, !is.na(ag_beans10))
+data.total.detect.aglyc$resid <- mod.gam.detect.aglyc$y - mod.gam.detect.aglyc$fitted.values
+plot(data.total.detect.aglyc$ag_beans10[abs(data.total.detect.aglyc$resid)<1500], data.total.detect.aglyc$resid[abs(data.total.detect.aglyc$resid)<1500], xlab = "% Landcover soybeans w/i 10km", ylab = "Residuals from Restricted Model")
+abline(mean(mod.gam3.aglyc$y - mod.gam3.aglyc$fitted.values + mod.gam3.aglyc$coefficients[5] * mod.gam3.aglyc$model$ag_beans10),mod.gam3.aglyc$coefficients[5], col = "red", lwd = 2)
+
+mod.gam.detect.rpadi <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total.rpadi,family=nb())
+data.total.detect.rpadi <- subset(data.total.rpadi, !is.na(ag_beans10))
+data.total.detect.rpadi$resid <- mod.gam.detect.rpadi$y - mod.gam.detect.rpadi$fitted.values
+plot(data.total.detect.rpadi$ag_corn10, data.total.detect.rpadi$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+abline(mean(mod.gam3.rpadi$y - mod.gam3.rpadi$fitted.values + mod.gam3.rpadi$coefficients[4] * mod.gam3.rpadi$model$ag_corn10), mod.gam3.rpadi$coefficients[4])
+
+mod.gam.detect.rmaidis <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total.rmaidis,family=nb())
+data.total.detect.rmaidis <- subset(data.total.rmaidis, !is.na(ag_beans10))
+data.total.detect.rmaidis$resid <- mod.gam.detect.rmaidis$y - mod.gam.detect.rmaidis$fitted.values
+plot(data.total.detect.rmaidis$ag_corn10, data.total.detect.rmaidis$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+abline(mean(mod.gam3.rmaidis$y - mod.gam3.rmaidis$fitted.values + mod.gam3.rmaidis$coefficients[4] * mod.gam3.rmaidis$model$ag_corn10), mod.gam3.rmaidis$coefficients[4], col = "red", lwd = 2)
+
 ##########################################
 cc <- confint(mod1,parm="beta_")
 ctab <- as.data.frame(cbind(est=fixef(mod1),cc))
