@@ -246,13 +246,13 @@ peaks$week<-weeks
 #merge peaks and data file
 data<-merge(data,peaks,by=c("site.id","year","week"),all=T)
 
-##Add in landcover data##
+##load in landcover data##
 cdl<-read.csv("Data/cdl.csv")
-cdl.cut<-cdl[,c(2:3,42:50)]
+cdl.cut<-cdl[,c(2:3,11:50)]
 colnames(cdl.cut)[1]<-"year"
 colnames(cdl.cut)[2]<-"site.id"
 
-#add in landscape data
+#add landcover data to dataframe
 cdl.cut$year<-as.factor(cdl.cut$year)
 data$site.id<-as.factor(data$site.id)
 cdl.cut<-aggregate(.~site.id+year,data=cdl.cut,mean)
@@ -265,8 +265,8 @@ colnames(coords)<-c("site.id","lat","long")
 data<-merge(data,coords,by="site.id",all.x=T)
 
 #rescale data
-data.scale2<-scale(data[,c(9:12,14:22)],center=F,scale=T)
-data.scale2<-cbind(data[,c(1:8,13,23:24)],data.scale2)
+data.scale2<-scale(data[,c(9:12,14:53)],center=F,scale=T)
+data.scale2<-cbind(data[,c(1:8,13,54:55)],data.scale2)
 
 ##Analyze some data!!!
 mod1<-lmer(peak~precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale2)
@@ -282,6 +282,19 @@ ggplot(data, aes(x = precip.accum, y = peak))+
   theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
+###RESIDUAL PLOT FOR PEAKS###
+mod.gam.peak.resid <- gam(peak ~ dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10, data = data.scale2)
+
+tiff("peak_precip_resid.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(na.omit(data.scale2), aes(x = precip.accum, y = resid(mod.gam.peak.resid)))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  annotate("text",label="p>0.001",x=1.5,y=150,size=5)+
+  annotate("text",label="paste(R ^ 2, \" = 0.40\")",x=1.5,y=140,parse = TRUE,size=5)+
+  labs(x = "Precipitation accumulation (mm)", y = "Degree day at peak aphid abundance\n(model residuals)")+
+  theme(text = element_text(size=24),axis.text=element_text(colour="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
 ##total aphid abundance
 aphid.total<-aggregate(captures~year+site.id,data=aphid.all,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
@@ -290,12 +303,12 @@ data.total<-merge(data.total,cdl.cut,by=c("site.id","year"),all.x=T)
 
 #rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
 data.total<-merge(data.total,coords,by="site.id",all.x=T)
-data.scale<-scale(data.total[,9:20],center=F,scale=T)
-data.scale<-cbind(data.total[,1:8],data.scale,data.total[,21:22])
+data.scale<-scale(data.total[,9:51],center=F,scale=T)
+data.scale<-cbind(data.total[,1:8],data.scale,data.total[,52:53])
 
 #model
-mod.pos<-glmer(captures~dd.acum+precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale,family=poisson)
-Anova(mod2,type=3)
+mod.pos<-glmer(captures~dd.acum+precip.accum+forest10+ag10+(1|site.id)+(1|year),data=data.scale,family=poisson)
+Anova(mod.pos,type=3)
 
 #Function for checking for overdispersion
 overdisp_fun <- function(model) {
@@ -314,7 +327,7 @@ overdisp_fun <- function(model) {
 overdisp_fun(mod.pos)
 
 ##
-mod2<-glmer.nb(captures~dd.acum+precip.accum+forest+ag_corn+ag_beans+ag_wheat+ag_smgrains+(1|site.id)+(1|year),data=data.scale)
+mod2<-glmer.nb(captures~dd.acum+precip.accum+forest10+ag_corn10+ag_beans10+ag_wheat10+ag_smgrains10+(1|site.id)+(1|year),data=data.scale)
 Anova(mod2,type=3)
 
 #plots
@@ -324,6 +337,21 @@ ggplot(data.scale, aes(x = dd.acum, y = captures))+
   stat_function(fun=function(x)exp(fixef(mod2)[1] + fixef(mod2)[2]*x),size=2,color="red")+
   annotate("text",label="p<0.001",x=.865,y=21000,size=5)+
   annotate("text",label="paste(R ^ 2, \" = 0.31\")",x=.865,y=20000,parse = TRUE,size=5)+
+  labs(x = "Degree day accumulation", y = "Total aphid abundance\n(# of captures)")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+###TOTAL CAPTURES RESIDUAL MODEL###
+##Not working. I'm not sure we can really plot against the resid for this one because it has a negbi relationship
+gam.captures.resid<-gam(captures ~ precip.accum+ag_corn10+ag_beans10+ag_smgrains10+forest10, data = data.scale,family="nb")
+gam.captures<-gam(resid(gam.captures.resid)~dd.acum,data=na.omit(data.scale),family="nb")
+
+tiff("captures_dd_acum_resid.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(na.omit(data.scale), aes(x = dd.acum, y = resid(gam.captures.resid)))+
+  geom_point(size=2)+
+  stat_function(fun=function(x)exp(coef(gam.captures)[1] + coef(gam.captures)[3]*x),size=2,color="red")+
+  #annotate("text",label="p<0.001",x=.865,y=21000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.31\")",x=.865,y=20000,parse = TRUE,size=5)+
   labs(x = "Degree day accumulation", y = "Total aphid abundance\n(# of captures)")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
@@ -398,9 +426,9 @@ sjp.glmer(mod2,
 
 ####Disaggregate species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
 
-aphid.aglyc <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Aphis.glycines"], sum)
-aphid.rpadi <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Rhopalosiphum.padi"], sum)
-aphid.rmaidis <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Aphid.Species == "Rhopalosiphum.maidis"], sum)
+aphid.aglyc <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Species == "Aphis.glycines"], sum)
+aphid.rpadi <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Species == "Rhopalosiphum.padi"], sum)
+aphid.rmaidis <- aggregate(Captures ~ Site + Date + Year, data = aphid[aphid$Species == "Rhopalosiphum.maidis"], sum)
 
 colnames(aphid.aglyc) <- c("site.id","doy","year","captures")
 colnames(aphid.rpadi) <- c("site.id","doy","year","captures")
@@ -463,8 +491,8 @@ summary(mod.gam2.rmaidis)
 
 mod.gam3.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
 summary(mod.gam3.rmaidis)
-
-
+rsq.partial(mod.gam3.rmaidis,type="lr",adj=T)
+r2beta(glmer.nb(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+(1|year), data = data.scale.rmaidis))
 
 ####Relative abund. by species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
 
@@ -482,7 +510,7 @@ data.ratio.rmaidis$ratio <- data.ratio.rmaidis$captures/data.ratio.rmaidis$captu
 mod.gam2.aglyc.ratio<-gam(ratio ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.aglyc)
 summary(mod.gam2.aglyc.ratio)
 
-mod.gam3.aglyc.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.ratio.aglyc)
+mod.gam3.aglyc.ratio<-gam(ratio ~ precip.accum+dd.acum+ag_corn+ag_beans+ag_smgrains+forest+s(lat,long)+s(year,bs="re"), data = data.ratio.aglyc)
 summary(mod.gam3.aglyc.ratio)
 
 #rpadi
@@ -508,7 +536,7 @@ data.total.detect$resid <- mod.gam.detect$y - mod.gam.detect$fitted.values
 plot(data.total.detect$ag_corn10, data.total.detect$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
 abline(mean(data.total.detect$resid),mod.gam3$coefficients[4])
 
-mod.gam.detect.aglyc <- gam(captures ~ precip.accum+dd.acum+ag_smgrains10+ag_corn10+forest10, data = data.total.aglyc,family=nb())
+mod.gam.detect.aglyc <- gam(captures ~ precip.accum+dd.acum+ag_smgrains+ag_corn+forest, data = data.total.aglyc,family=nb())
 data.total.detect.aglyc <- subset(data.total.aglyc, !is.na(ag_beans10))
 data.total.detect.aglyc$resid <- mod.gam.detect.aglyc$y - mod.gam.detect.aglyc$fitted.values
 plot(data.total.detect.aglyc$ag_beans10[abs(data.total.detect.aglyc$resid)<1500], data.total.detect.aglyc$resid[abs(data.total.detect.aglyc$resid)<1500], xlab = "% Landcover soybeans w/i 10km", ylab = "Residuals from Restricted Model")
@@ -559,3 +587,44 @@ ggplot(dtab,aes(x=rownames(dtab),y=est))+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
 
+#####Individual species figures###
+mod.gam.aglyc.resid <- gam(captures ~ precip.accum+dd.acum+ag_smgrains10+ag_corn10+forest10, data = data.scale.aglyc,family=nb())
+
+tiff("captures_gly_soy.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(na.omit(data.scale.aglyc), aes(x = ag_beans10, y = resid(mod.gam.aglyc.resid)))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  #stat_function(fun=function(x)exp(fixef(mod.wheat)[1] + fixef(mod.wheat)[2]*x),size=2,color="red")+
+  #annotate("text",label="p=0.01",x=.2,y=21000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.27\")",x=.3,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape soybean cover\nwithin 10k", y = "A.glyc abundance\n(# of captures) residuals")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+##Madis model
+mod.gam.madis.resid <- gam(captures ~ precip.accum+dd.acum+ag_smgrains10+ag_beans10+forest10, data = data.scale.rmaidis,family=nb())
+
+tiff("captures_madis_corn.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(na.omit(data.scale.rmaidis), aes(x = ag_corn10, y = resid(mod.gam.madis.resid)))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  #stat_function(fun=function(x)exp(fixef(mod.wheat)[1] + fixef(mod.wheat)[2]*x),size=2,color="red")+
+  #annotate("text",label="p=0.01",x=.2,y=21000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.27\")",x=.3,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape corn cover\nwithin 10k", y = "R. madis abundance\n(# of captures) residuals")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
+
+##Padi model
+mod.gam.padi.resid <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_corn10+forest10, data = data.scale.rpadi,family=nb())
+
+tiff("captures_padi_grain.tiff",width = 4200, height = 4200, units = "px", res = 600)
+ggplot(na.omit(data.scale.rpadi), aes(x = ag_wheat10, y = resid(mod.gam.padi.resid)))+
+  geom_point(size=2)+
+  geom_smooth(method="lm",size=2,color="red",se=F)+
+  #stat_function(fun=function(x)exp(fixef(mod.wheat)[1] + fixef(mod.wheat)[2]*x),size=2,color="red")+
+  #annotate("text",label="p=0.01",x=.2,y=21000,size=5)+
+  #annotate("text",label="paste(R ^ 2, \" = 0.27\")",x=.3,y=20000,parse = TRUE,size=5)+
+  labs(x = "% Landscape wheat cover\nwithin 10k", y = "R. padi abundance\n(# of captures) residuals")+
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+dev.off()
