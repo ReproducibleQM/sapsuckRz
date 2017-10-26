@@ -298,13 +298,13 @@ dev.off()
 ##total aphid abundance
 aphid.total<-aggregate(captures~year+site.id,data=aphid.all,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.total<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
-data.total<-merge(data.total,cdl.cut,by=c("site.id","year"),all.x=T)
+data.scale<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
+data.scale<-merge(data.scale,cdl.cut,by=c("site.id","year"),all.x=T)
 
 #rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.total<-merge(data.total,coords,by="site.id",all.x=T)
-data.scale<-scale(data.total[,9:51],center=F,scale=T)
-data.scale<-cbind(data.total[,1:8],data.scale,data.total[,52:53])
+data.scale<-merge(data.scale,coords,by="site.id",all.x=T)
+data.scale<-scale(data.scale[,9:51],center=F,scale=T)
+data.scale<-cbind(data.scale[,1:8],data.scale,data.scale[,52:53])
 
 #model
 mod.pos<-glmer(captures~dd.acum+precip.accum+forest10+ag10+(1|site.id)+(1|year),data=data.scale,family=poisson)
@@ -361,10 +361,10 @@ mod.gam1<-gam(peak ~ precip.accum+s(lat,long)+s(site.id,bs="re")+s(year,bs="re")
 summary(mod.gam1)
 
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale,family="nb")
 summary(mod.gam2)
 
-mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.total,family="nb")
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat.x,long.x)+s(year,bs="re"), data = data.scale,family="nb")
 summary(mod.gam3)
 
 library(sandwich)
@@ -377,10 +377,10 @@ r.est <- cbind(Estimate = coef(mod.gam3), "Robust SE" = stderr.mod.gam3,
                UL = coef(mod.gam3) + 1.96*stderr.mod.gam3)
 r.est
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.total,family=nb())
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.scale,family=nb())
 summary(mod.gam2)
 
-mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.total,family="poisson")
+mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.scale,family="poisson")
 
 mod.corn<-glmer.nb(captures~ag_corn++(1|site.id)+(1|year),data=data.scale)
 
@@ -438,37 +438,37 @@ colnames(aphid.rmaidis) <- c("site.id","doy","year","captures")
 ##total aphid abundance
 aphid.total.aglyc<-aggregate(captures~year+site.id,data=aphid.aglyc,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.total.aglyc<-merge(aphid.total.aglyc,weather.max,by=c("site.id","year"),all.x=T)
-data.total.aglyc<-merge(data.total.aglyc,cdl.cut,by=c("site.id","year"),all.x=T)
+data.scale.aglyc<-merge(aphid.total.aglyc,weather.max,by=c("site.id","year"),all.x=T)
+data.scale.aglyc<-merge(data.scale.aglyc,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.total.aglyc<-merge(data.total.aglyc,coords,by="site.id",all.x=T)
-data.scale.aglyc<-scale(data.total.aglyc[,9:51],center=F,scale=T)
-data.scale.aglyc<-cbind(data.total.aglyc[,1:8],data.scale.aglyc,data.total.aglyc[,52:53])
+data.scale.aglyc<-merge(data.scale.aglyc,coords,by="site.id",all.x=T)
+data.scale.aglyc<-scale(data.scale.aglyc[,9:51],center=F,scale=T)
+data.scale.aglyc<-cbind(data.scale.aglyc[,1:8],data.scale.aglyc,data.scale.aglyc[,52:53])
 
 #rpadi
 ##total aphid abundance
 aphid.total.rpadi<-aggregate(captures~year+site.id,data=aphid.rpadi,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.total.rpadi<-merge(aphid.total.rpadi,weather.max,by=c("site.id","year"),all.x=T)
-data.total.rpadi<-merge(data.total.rpadi,cdl.cut,by=c("site.id","year"),all.x=T)
+data.scale.rpadi<-merge(aphid.total.rpadi,weather.max,by=c("site.id","year"),all.x=T)
+data.scale.rpadi<-merge(data.scale.rpadi,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.total.rpadi<-merge(data.total.rpadi,coords,by="site.id",all.x=T)
-data.scale.rpadi<-scale(data.total.rpadi[,9:51],center=F,scale=T)
-data.scale.rpadi<-cbind(data.total.rpadi[,1:8],data.scale.rpadi,data.total.rpadi[,52:53])
+data.scale.rpadi<-merge(data.scale.rpadi,coords,by="site.id",all.x=T)
+data.scale.rpadi<-scale(data.scale.rpadi[,9:51],center=F,scale=T)
+data.scale.rpadi<-cbind(data.scale.rpadi[,1:8],data.scale.rpadi,data.scale.rpadi[,52:53])
 
 #rmaidis
 ##total aphid abundance
 aphid.total.rmaidis<-aggregate(captures~year+site.id,data=aphid.rmaidis,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.total.rmaidis<-merge(aphid.total.rmaidis,weather.max,by=c("site.id","year"),all.x=T)
-data.total.rmaidis<-merge(data.total.rmaidis,cdl.cut,by=c("site.id","year"),all.x=T)
+data.scale.rmaidis<-merge(aphid.total.rmaidis,weather.max,by=c("site.id","year"),all.x=T)
+data.scale.rmaidis<-merge(data.scale.rmaidis,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.total.rmaidis<-merge(data.total.rmaidis,coords,by="site.id",all.x=T)
-data.scale.rmaidis<-scale(data.total.rmaidis[,9:51],center=F,scale=T)
-data.scale.rmaidis<-cbind(data.total.rmaidis[,1:8],data.scale.rmaidis,data.total.rmaidis[,52:53])
+data.scale.rmaidis<-merge(data.scale.rmaidis,coords,by="site.id",all.x=T)
+data.scale.rmaidis<-scale(data.scale.rmaidis[,9:51],center=F,scale=T)
+data.scale.rmaidis<-cbind(data.scale.rmaidis[,1:8],data.scale.rmaidis,data.scale.rmaidis[,52:53])
 
 #Models! (The disaggregated ones)
 ##aglyc
@@ -530,28 +530,28 @@ summary(mod.gam3.rmaidis.ratio)
 
 # Land Cover Non-linearity/Discontinuity Detection ####
 
-mod.gam.detect <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total,family=nb())
-data.total.detect <- subset(data.total, !is.na(ag_beans10))
-data.total.detect$resid <- mod.gam.detect$y - mod.gam.detect$fitted.values
-plot(data.total.detect$ag_corn10, data.total.detect$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
-abline(mean(data.total.detect$resid),mod.gam3$coefficients[4])
+mod.gam.detect <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.scale,family=nb())
+data.scale.detect <- subset(data.scale, !is.na(ag_beans10))
+data.scale.detect$resid <- mod.gam.detect$y - mod.gam.detect$fitted.values
+plot(data.scale.detect$ag_corn10, data.scale.detect$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+abline(mean(data.scale.detect$resid),mod.gam3$coefficients[4])
 
-mod.gam.detect.aglyc <- gam(captures ~ precip.accum+dd.acum+ag_smgrains+ag_corn+forest, data = data.total.aglyc,family=nb())
-data.total.detect.aglyc <- subset(data.total.aglyc, !is.na(ag_beans10))
-data.total.detect.aglyc$resid <- mod.gam.detect.aglyc$y - mod.gam.detect.aglyc$fitted.values
-plot(data.total.detect.aglyc$ag_beans10[abs(data.total.detect.aglyc$resid)<1500], data.total.detect.aglyc$resid[abs(data.total.detect.aglyc$resid)<1500], xlab = "% Landcover soybeans w/i 10km", ylab = "Residuals from Restricted Model")
+mod.gam.detect.aglyc <- gam(captures ~ precip.accum+dd.acum+ag_smgrains+ag_corn+forest, data = data.scale.aglyc,family=nb())
+data.scale.detect.aglyc <- subset(data.scale.aglyc, !is.na(ag_beans10))
+data.scale.detect.aglyc$resid <- mod.gam.detect.aglyc$y - mod.gam.detect.aglyc$fitted.values
+plot(data.scale.detect.aglyc$ag_beans10[abs(data.scale.detect.aglyc$resid)<1500], data.scale.detect.aglyc$resid[abs(data.scale.detect.aglyc$resid)<1500], xlab = "% Landcover soybeans w/i 10km", ylab = "Residuals from Restricted Model")
 abline(mean(mod.gam3.aglyc$y - mod.gam3.aglyc$fitted.values + mod.gam3.aglyc$coefficients[5] * mod.gam3.aglyc$model$ag_beans10),mod.gam3.aglyc$coefficients[5], col = "red", lwd = 2)
 
-mod.gam.detect.rpadi <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total.rpadi,family=nb())
-data.total.detect.rpadi <- subset(data.total.rpadi, !is.na(ag_beans10))
-data.total.detect.rpadi$resid <- mod.gam.detect.rpadi$y - mod.gam.detect.rpadi$fitted.values
-plot(data.total.detect.rpadi$ag_corn10, data.total.detect.rpadi$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+mod.gam.detect.rpadi <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.scale.rpadi,family=nb())
+data.scale.detect.rpadi <- subset(data.scale.rpadi, !is.na(ag_beans10))
+data.scale.detect.rpadi$resid <- mod.gam.detect.rpadi$y - mod.gam.detect.rpadi$fitted.values
+plot(data.scale.detect.rpadi$ag_corn10, data.scale.detect.rpadi$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
 abline(mean(mod.gam3.rpadi$y - mod.gam3.rpadi$fitted.values + mod.gam3.rpadi$coefficients[4] * mod.gam3.rpadi$model$ag_corn10), mod.gam3.rpadi$coefficients[4])
 
-mod.gam.detect.rmaidis <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.total.rmaidis,family=nb())
-data.total.detect.rmaidis <- subset(data.total.rmaidis, !is.na(ag_beans10))
-data.total.detect.rmaidis$resid <- mod.gam.detect.rmaidis$y - mod.gam.detect.rmaidis$fitted.values
-plot(data.total.detect.rmaidis$ag_corn10, data.total.detect.rmaidis$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
+mod.gam.detect.rmaidis <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_smgrains10+forest10, data = data.scale.rmaidis,family=nb())
+data.scale.detect.rmaidis <- subset(data.scale.rmaidis, !is.na(ag_beans10))
+data.scale.detect.rmaidis$resid <- mod.gam.detect.rmaidis$y - mod.gam.detect.rmaidis$fitted.values
+plot(data.scale.detect.rmaidis$ag_corn10, data.scale.detect.rmaidis$resid, xlab = "% Landcover Corn w/i 10km", ylab = "Residuals from Restricted Model")
 abline(mean(mod.gam3.rmaidis$y - mod.gam3.rmaidis$fitted.values + mod.gam3.rmaidis$coefficients[4] * mod.gam3.rmaidis$model$ag_corn10), mod.gam3.rmaidis$coefficients[4], col = "red", lwd = 2)
 
 ##########################################
@@ -628,3 +628,30 @@ ggplot(na.omit(data.scale.rpadi), aes(x = ag_wheat10, y = resid(mod.gam.padi.res
   labs(x = "% Landscape wheat cover\nwithin 10k", y = "R. padi abundance\n(# of captures) residuals")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
+
+####Predicted values plots####
+
+data.scale <- na.omit(data.scale)
+newdata <- data.frame(
+  precip.accum = seq(from = mean(data.scale$precip.accum), to = mean(data.scale$precip.accum), length.out = 100),
+  dd.acum = seq(from = mean(data.scale$dd.acum), to = mean(data.scale$dd.acum), length.out = 100),
+  ag_corn10 = seq(from = min(data.scale$ag_corn10), to = max(data.scale$ag_corn10), length.out = 100),
+  ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
+  ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
+  forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
+  lat.x = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
+  long.x = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
+)
+newdata <- cbind(newdata, predict.gam(mod.gam3, newdata, se.fit = T))
+newdata <- within(newdata, {
+ TotalCaptures <- exp(abs(fit))
+ LL <- exp(abs(fit) - 1.96 * se.fit)
+ UL <- exp(abs(fit) + 1.96 * se.fit)
+})
+
+summary(newdata)
+
+ggplot(newdata, aes(ag_corn10, TotalCaptures)) +
+  geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
+  geom_line(size = 2)
