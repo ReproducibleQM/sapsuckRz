@@ -283,7 +283,7 @@ ggplot(data, aes(x = precip.accum, y = peak))+
 dev.off()
 
 ###RESIDUAL PLOT FOR PEAKS###
-mod.gam.peak.resid <- gam(peak ~ dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10, data = data.scale2)
+mod.gam.peak.resid <- gam(peak ~ ag_corn10+ag_beans10+ag_smgrains10+forest10, data = data.scale2)
 
 tiff("peak_precip_resid.tiff",width = 4200, height = 4200, units = "px", res = 600)
 ggplot(na.omit(data.scale2), aes(x = precip.accum, y = resid(mod.gam.peak.resid)))+
@@ -588,6 +588,9 @@ ggplot(dtab,aes(x=rownames(dtab),y=est))+
 dev.off()
 
 #####Individual species figures###
+#These figures aren't 100% correct because the lines are lm fits but the models are negbi
+#need to figure out if we can fit a residual model with function from negbi model
+
 mod.gam.aglyc.resid <- gam(captures ~ precip.accum+dd.acum+ag_smgrains10+ag_corn10+forest10, data = data.scale.aglyc,family=nb())
 
 tiff("captures_gly_soy.tiff",width = 4200, height = 4200, units = "px", res = 600)
@@ -618,7 +621,7 @@ dev.off()
 ##Padi model
 mod.gam.padi.resid <- gam(captures ~ precip.accum+dd.acum+ag_beans10+ag_corn10+forest10, data = data.scale.rpadi,family=nb())
 
-tiff("captures_padi_grain.tiff",width = 4200, height = 4200, units = "px", res = 600)
+tiff("captures_padi_wheat.tiff",width = 4200, height = 4200, units = "px", res = 600)
 ggplot(na.omit(data.scale.rpadi), aes(x = ag_wheat10, y = resid(mod.gam.padi.resid)))+
   geom_point(size=2)+
   geom_smooth(method="lm",size=2,color="red",se=F)+
@@ -628,6 +631,7 @@ ggplot(na.omit(data.scale.rpadi), aes(x = ag_wheat10, y = resid(mod.gam.padi.res
   labs(x = "% Landscape wheat cover\nwithin 10k", y = "R. padi abundance\n(# of captures) residuals")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
+<<<<<<< HEAD
 
 ####Predicted values plots####
 
@@ -767,3 +771,5 @@ ggplot(newdata.beans[newdata.beans$Species!="R. padi",], aes(ag_beans10, TotalCa
         panel.background = element_blank(),
         legend.text = element_text(face = "italic"))
 ggsave("fig6.tiff", height = 7, width = 7, units = "in", device = "tiff")
+=======
+>>>>>>> origin/master
