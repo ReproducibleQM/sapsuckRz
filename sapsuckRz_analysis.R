@@ -730,7 +730,7 @@ ggplot(newdata.corn[newdata.corn$Species!="R. padi",], aes(ag_corn10, TotalCaptu
   #geom_point(data=na.omit(data.rmaidis),aes(x=ag_corn10,y=captures),color="#00BFC4",size=2)+
   geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
   geom_line(aes(colour = Species), size = 2) +
-  scale_y_continuous(trans='log2')+
+  #scale_y_continuous(trans='log2')+
   labs(x = "% Land Cover Corn w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),
   legend.text = element_text(face = "italic"))
