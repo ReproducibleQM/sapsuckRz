@@ -265,8 +265,8 @@ colnames(coords)<-c("site.id","lat","long")
 data<-merge(data,coords,by="site.id",all.x=T)
 
 #rescale data
-data.scale2<-scale(data[,c(9:12,14:53)],center=F,scale=T)
-data.scale2<-cbind(data[,c(1:8,13,54:55)],data.scale2)
+data.scale2<-scale(data[,c(12:55)],center=F,scale=T)
+data.scale2<-cbind(data[,c(1:11)],data.scale2)
 
 ##Analyze some data!!!
 mod1<-lmer(peak~precip.accum+forest+ag+(1|site.id)+(1|year),data=data.scale2)
@@ -298,13 +298,13 @@ dev.off()
 ##total aphid abundance
 aphid.total<-aggregate(captures~year+site.id,data=aphid.all,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.scale<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
-data.scale<-merge(data.scale,cdl.cut,by=c("site.id","year"),all.x=T)
+data2<-merge(aphid.total,weather.max,by=c("site.id","year"),all.x=T)
+data2<-merge(data2,cdl.cut,by=c("site.id","year"),all.x=T)
 
 #rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.scale<-merge(data.scale,coords,by="site.id",all.x=T)
-data.scale<-scale(data.scale[,9:51],center=F,scale=T)
-data.scale<-cbind(data.scale[,1:8],data.scale,data.scale[,52:53])
+data2<-merge(data2,coords,by="site.id",all.x=T)
+data.scale<-scale(data2[,9:51],center=F,scale=T)
+data.scale<-cbind(data2[,1:8],data.scale,data2[,52:53])
 
 #model
 mod.pos<-glmer(captures~dd.acum+precip.accum+forest10+ag10+(1|site.id)+(1|year),data=data.scale,family=poisson)
@@ -363,6 +363,7 @@ summary(mod.gam1)
 
 mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale,family="nb")
 summary(mod.gam2)
+rsq.partial(mod.gam2,adj=T,type="lr")
 
 mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat.x,long.x)+s(year,bs="re"), data = data.scale,family="nb")
 summary(mod.gam3)
@@ -377,7 +378,7 @@ r.est <- cbind(Estimate = coef(mod.gam3), "Robust SE" = stderr.mod.gam3,
                UL = coef(mod.gam3) + 1.96*stderr.mod.gam3)
 r.est
 
-mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn+ag_wheat+forest+s(lat,long)+s(year,bs="re"), data = data.scale,family=nb())
+mod.gam2<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale,family=nb())
 summary(mod.gam2)
 
 mod.gam3<-gam(captures ~ precip.accum+dd.acum+ag+forest+s(lat,long)+s(year,bs="re"), data = data.scale,family="poisson")
@@ -438,37 +439,37 @@ colnames(aphid.rmaidis) <- c("site.id","doy","year","captures")
 ##total aphid abundance
 aphid.total.aglyc<-aggregate(captures~year+site.id,data=aphid.aglyc,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.scale.aglyc<-merge(aphid.total.aglyc,weather.max,by=c("site.id","year"),all.x=T)
-data.scale.aglyc<-merge(data.scale.aglyc,cdl.cut,by=c("site.id","year"),all.x=T)
+data.aglyc<-merge(aphid.total.aglyc,weather.max,by=c("site.id","year"),all.x=T)
+data.aglyc<-merge(data.aglyc,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.scale.aglyc<-merge(data.scale.aglyc,coords,by="site.id",all.x=T)
+data.aglyc<-merge(data.aglyc,coords,by="site.id",all.x=T)
 data.scale.aglyc<-scale(data.scale.aglyc[,9:51],center=F,scale=T)
-data.scale.aglyc<-cbind(data.scale.aglyc[,1:8],data.scale.aglyc,data.scale.aglyc[,52:53])
+data.scale.aglyc<-cbind(data.aglyc[,1:8],data.scale.aglyc,data.aglyc[,52:53])
 
 #rpadi
 ##total aphid abundance
 aphid.total.rpadi<-aggregate(captures~year+site.id,data=aphid.rpadi,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.scale.rpadi<-merge(aphid.total.rpadi,weather.max,by=c("site.id","year"),all.x=T)
-data.scale.rpadi<-merge(data.scale.rpadi,cdl.cut,by=c("site.id","year"),all.x=T)
+data.rpadi<-merge(aphid.total.rpadi,weather.max,by=c("site.id","year"),all.x=T)
+data.rpadi<-merge(data.rpadi,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.scale.rpadi<-merge(data.scale.rpadi,coords,by="site.id",all.x=T)
-data.scale.rpadi<-scale(data.scale.rpadi[,9:51],center=F,scale=T)
-data.scale.rpadi<-cbind(data.scale.rpadi[,1:8],data.scale.rpadi,data.scale.rpadi[,52:53])
+data.rpadi<-merge(data.rpadi,coords,by="site.id",all.x=T)
+data.scale.rpadi<-scale(data.rpadi[,9:51],center=F,scale=T)
+data.scale.rpadi<-cbind(data.rpadi[,1:8],data.scale.rpadi,data.rpadi[,52:53])
 
 #rmaidis
 ##total aphid abundance
 aphid.total.rmaidis<-aggregate(captures~year+site.id,data=aphid.rmaidis,sum)
 weather.max<-aggregate(.~site.id+year,data=weather.cast,max)
-data.scale.rmaidis<-merge(aphid.total.rmaidis,weather.max,by=c("site.id","year"),all.x=T)
-data.scale.rmaidis<-merge(data.scale.rmaidis,cdl.cut,by=c("site.id","year"),all.x=T)
+data.rmaidis<-merge(aphid.total.rmaidis,weather.max,by=c("site.id","year"),all.x=T)
+data.rmaidis<-merge(data.rmaidis,cdl.cut,by=c("site.id","year"),all.x=T)
 
 ##rescale variables because the orders of magnitude difference in scales is making glmer.nb angry
-data.scale.rmaidis<-merge(data.scale.rmaidis,coords,by="site.id",all.x=T)
-data.scale.rmaidis<-scale(data.scale.rmaidis[,9:51],center=F,scale=T)
-data.scale.rmaidis<-cbind(data.scale.rmaidis[,1:8],data.scale.rmaidis,data.scale.rmaidis[,52:53])
+data.rmaidis<-merge(data.rmaidis,coords,by="site.id",all.x=T)
+data.scale.rmaidis<-scale(data.rmaidis[,9:51],center=F,scale=T)
+data.scale.rmaidis<-cbind(data.rmaidis[,1:8],data.scale.rmaidis,data.rmaidis[,52:53])
 
 #Models! (The disaggregated ones)
 ##aglyc
@@ -477,6 +478,7 @@ summary(mod.gam2.aglyc)
 
 mod.gam3.aglyc<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.aglyc,family="nb")
 summary(mod.gam3.aglyc)
+rsq.partial(mod.gam3.aglyc,type="lr")
 
 #rpadi
 mod.gam2.rpadi<-gam(captures ~ precip.accum+dd.acum+ag10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rpadi,family="nb")
@@ -491,7 +493,9 @@ summary(mod.gam2.rmaidis)
 
 mod.gam3.rmaidis<-gam(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+s(lat,long)+s(year,bs="re"), data = data.scale.rmaidis,family="nb")
 summary(mod.gam3.rmaidis)
-rsq.partial(mod.gam3.rmaidis,type="lr",adj=T)
+rsq.partial(mod.gam3.rmaidis,type="lr")
+
+
 r2beta(glmer.nb(captures ~ precip.accum+dd.acum+ag_corn10+ag_beans10+ag_smgrains10+forest10+(1|year), data = data.scale.rmaidis))
 
 ####Relative abund. by species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
@@ -631,7 +635,6 @@ ggplot(na.omit(data.scale.rpadi), aes(x = ag_wheat10, y = resid(mod.gam.padi.res
   labs(x = "% Landscape wheat cover\nwithin 10k", y = "R. padi abundance\n(# of captures) residuals")+
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 dev.off()
-<<<<<<< HEAD
 
 ####Predicted values plots####
 
@@ -644,25 +647,25 @@ newdata.ddacum <- data.frame(
   ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
   ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
   forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
-  lat.x = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
-  long.x = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  lat = seq(from = mean(data.scale$lat), to = mean(data.scale$lat), length.out = 100),
+  long = seq(from = mean(data.scale$long), to = mean(data.scale$long), length.out = 100),
   year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
 )
-newdata.ddacum <- cbind(newdata.ddacum, predict.gam(mod.gam3, newdata.ddacum, se.fit = T))
+newdata.ddacum <- cbind(newdata.ddacum, predict.gam(mod.gam2, newdata.ddacum, se.fit = T))
 newdata.ddacum <- within(newdata.ddacum, {
  TotalCaptures <- exp(fit)
  LL <- exp(fit - 1.96 * se.fit)
  UL <- exp(fit + 1.96 * se.fit)
 })
-newdata.ddacum$dd.acum <- newdata.ddacum$dd.acum*(sqrt(mean(data.total$dd.acum^2))) #De-scaling
+newdata.ddacum$dd.acum <- newdata.ddacum$dd.acum*(sqrt(mean(data2$dd.acum^2))) #De-scaling
 
 ggplot(newdata.ddacum, aes(dd.acum, TotalCaptures)) +
   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
+  #geom_point(data=na.omit(data2),aes(x=dd.acum,y=captures),size=2)+
   geom_line(size = 2) +
   labs(x = "Seasonal Degree Day Accumulation", y = "Predicted Total Seasonal Captures") +
-  theme(text = element_text(size = 26),
-        panel.background = element_blank())
-ggsave("fig3.tiff", height = 7, width = 7, units = "in", device = "tiff")
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+ggsave("fig3-2.tiff", height = 7, width = 7, units = "in", device = "tiff")
 
 # Pooled species, precip.accum
 data.scale <- na.omit(data.scale)
@@ -673,26 +676,25 @@ newdata.precip <- data.frame(
   ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
   ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
   forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
-  lat.x = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
-  long.x = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  lat = seq(from = mean(data.scale$lat), to = mean(data.scale$lat), length.out = 100),
+  long = seq(from = mean(data.scale$long), to = mean(data.scale$long), length.out = 100),
   year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
 )
-newdata.precip <- cbind(newdata.precip, predict.gam(mod.gam3, newdata.precip, se.fit = T))
+newdata.precip <- cbind(newdata.precip, predict.gam(mod.gam2, newdata.precip, se.fit = T))
 newdata.precip <- within(newdata.precip, {
   TotalCaptures <- exp(fit)
   LL <- exp(fit - 1.96 * se.fit)
   UL <- exp(fit + 1.96 * se.fit)
 })
-newdata.precip$precip.accum <- newdata.precip$precip.accum*(sqrt(mean(data.total$precip.accum^2)))
+newdata.precip$precip.accum <- newdata.precip$precip.accum*(sqrt(mean(data2$precip.accum^2)))
 
 ggplot(newdata.precip, aes(precip.accum, TotalCaptures)) +
   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
+  #geom_point(data=na.omit(data2),aes(x=precip.accum,y=captures),size=2)+
   geom_line(size = 2) +
   labs(x = "Seasonal Precipitation Accumulation (mm)", y = "Predicted Total Seasonal Captures") +
-  theme(text = element_text(size = 26),
-        axis.title.x = element_text(size = 22),
-        panel.background = element_blank())
-ggsave("fig4.tiff", height = 7, width = 7, units = "in", device = "tiff")
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
+ggsave("fig4-2.tiff", height = 7, width = 8, units = "in", device = "tiff")
 
 # Disagg species, corn
 data.scale <- na.omit(data.scale)
@@ -703,8 +705,8 @@ newdata.corn <- data.frame(
   ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
   ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
   forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
-  lat = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
-  long = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  lat = seq(from = mean(data.scale$lat), to = mean(data.scale$lat), length.out = 100),
+  long = seq(from = mean(data.scale$long), to = mean(data.scale$long), length.out = 100),
   year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
 )
 
@@ -721,16 +723,18 @@ newdata.corn <- within(newdata.corn, {
   LL <- exp(fit - 1.96 * se.fit)
   UL <- exp(fit + 1.96 * se.fit)
 })
-newdata.corn$ag_corn10 <- newdata.corn$ag_corn10*(sqrt(mean(data.total$ag_corn10^2)))
+newdata.corn$ag_corn10 <- newdata.corn$ag_corn10*(sqrt(mean(na.omit(data2)$ag_corn10^2)))
 
 ggplot(newdata.corn[newdata.corn$Species!="R. padi",], aes(ag_corn10, TotalCaptures)) +
+  #geom_point(data=na.omit(data.aglyc),aes(x=ag_corn10,y=captures),color="#F8766D",size=2)+
+  #geom_point(data=na.omit(data.rmaidis),aes(x=ag_corn10,y=captures),color="#00BFC4",size=2)+
   geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
   geom_line(aes(colour = Species), size = 2) +
+  scale_y_continuous(trans='log2')+
   labs(x = "% Land Cover Corn w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
-  theme(text = element_text(size = 26),
-        panel.background = element_blank(),
-        legend.text = element_text(face = "italic"))
-ggsave("fig5.tiff", height = 7, width = 7, units = "in", device = "tiff")
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),
+  legend.text = element_text(face = "italic"))
+ggsave("fig5-2.tiff", height = 7, width = 7, units = "in", device = "tiff")
 
 # Disagg species, beans
 data.scale <- na.omit(data.scale)
@@ -741,8 +745,8 @@ newdata.beans <- data.frame(
   ag_beans10 = seq(from = min(data.scale$ag_beans10), to = max(data.scale$ag_beans10), length.out = 100),
   ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
   forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
-  lat = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
-  long = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  lat = seq(from = mean(data.scale$lat), to = mean(data.scale$lat), length.out = 100),
+  long = seq(from = mean(data.scale$long), to = mean(data.scale$long), length.out = 100),
   year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
 )
 
@@ -759,17 +763,15 @@ newdata.beans <- within(newdata.beans, {
   LL <- exp(fit - 1.96 * se.fit)
   UL <- exp(fit + 1.96 * se.fit)
 })
-newdata.beans$ag_beans10 <- newdata.beans$ag_beans10*(sqrt(mean(data.total$ag_beans10^2)))
+newdata.beans$ag_beans10 <- newdata.beans$ag_beans10*(sqrt(mean(na.omit(data2)$ag_beans10^2)))
 
 
 ggplot(newdata.beans[newdata.beans$Species!="R. padi",], aes(ag_beans10, TotalCaptures)) +
+  #geom_point(data=na.omit(data.aglyc),aes(x=ag_beans10,y=captures),color="#F8766D",size=2)+
+  #geom_point(data=na.omit(data.rmaidis),aes(x=ag_beans10,y=captures),color="#00BFC4",size=2)+
   geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
   geom_line(aes(colour = Species), size = 2) +
   labs(x = "% Land Cover Soybeans w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
-  theme(text = element_text(size = 26),
-        axis.title.x = element_text(size = 22),
-        panel.background = element_blank(),
+  theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),
         legend.text = element_text(face = "italic"))
-ggsave("fig6.tiff", height = 7, width = 7, units = "in", device = "tiff")
-=======
->>>>>>> origin/master
+ggsave("fig6-2.tiff", height = 7, width = 8, units = "in", device = "tiff")
