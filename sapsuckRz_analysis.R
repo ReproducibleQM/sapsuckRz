@@ -631,11 +631,12 @@ dev.off()
 
 ####Predicted values plots####
 
+# Pooled species, dd.acum
 data.scale <- na.omit(data.scale)
-newdata <- data.frame(
+newdata.ddacum <- data.frame(
   precip.accum = seq(from = mean(data.scale$precip.accum), to = mean(data.scale$precip.accum), length.out = 100),
-  dd.acum = seq(from = mean(data.scale$dd.acum), to = mean(data.scale$dd.acum), length.out = 100),
-  ag_corn10 = seq(from = min(data.scale$ag_corn10), to = max(data.scale$ag_corn10), length.out = 100),
+  dd.acum = seq(from = min(data.scale$dd.acum), to = max(data.scale$dd.acum), length.out = 100),
+  ag_corn10 = seq(from = mean(data.scale$ag_corn10), to = mean(data.scale$ag_corn10), length.out = 100),
   ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
   ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
   forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
@@ -643,15 +644,126 @@ newdata <- data.frame(
   long.x = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
   year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
 )
-newdata <- cbind(newdata, predict.gam(mod.gam3, newdata, se.fit = T))
-newdata <- within(newdata, {
- TotalCaptures <- exp(abs(fit))
- LL <- exp(abs(fit) - 1.96 * se.fit)
- UL <- exp(abs(fit) + 1.96 * se.fit)
+newdata.ddacum <- cbind(newdata.ddacum, predict.gam(mod.gam3, newdata.ddacum, se.fit = T))
+newdata.ddacum <- within(newdata.ddacum, {
+ TotalCaptures <- exp(fit)
+ LL <- exp(fit - 1.96 * se.fit)
+ UL <- exp(fit + 1.96 * se.fit)
 })
+newdata.ddacum$dd.acum <- newdata.ddacum$dd.acum*(sqrt(mean(data.total$dd.acum^2))) #De-scaling
 
-summary(newdata)
-
-ggplot(newdata, aes(ag_corn10, TotalCaptures)) +
+ggplot(newdata.ddacum, aes(dd.acum, TotalCaptures)) +
   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
-  geom_line(size = 2)
+  geom_line(size = 2) +
+  labs(x = "Seasonal Degree Day Accumulation", y = "Predicted Total Seasonal Captures") +
+  theme(text = element_text(size = 26),
+        panel.background = element_blank())
+ggsave("fig3.tiff", height = 7, width = 7, units = "in", device = "tiff")
+
+# Pooled species, precip.accum
+data.scale <- na.omit(data.scale)
+newdata.precip <- data.frame(
+  precip.accum = seq(from = min(data.scale$precip.accum), to = max(data.scale$precip.accum), length.out = 100),
+  dd.acum = seq(from = mean(data.scale$dd.acum), to = mean(data.scale$dd.acum), length.out = 100),
+  ag_corn10 = seq(from = mean(data.scale$ag_corn10), to = mean(data.scale$ag_corn10), length.out = 100),
+  ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
+  ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
+  forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
+  lat.x = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
+  long.x = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
+)
+newdata.precip <- cbind(newdata.precip, predict.gam(mod.gam3, newdata.precip, se.fit = T))
+newdata.precip <- within(newdata.precip, {
+  TotalCaptures <- exp(fit)
+  LL <- exp(fit - 1.96 * se.fit)
+  UL <- exp(fit + 1.96 * se.fit)
+})
+newdata.precip$precip.accum <- newdata.precip$precip.accum*(sqrt(mean(data.total$precip.accum^2)))
+
+ggplot(newdata.precip, aes(precip.accum, TotalCaptures)) +
+  geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
+  geom_line(size = 2) +
+  labs(x = "Seasonal Precipitation Accumulation (mm)", y = "Predicted Total Seasonal Captures") +
+  theme(text = element_text(size = 26),
+        axis.title.x = element_text(size = 22),
+        panel.background = element_blank())
+ggsave("fig4.tiff", height = 7, width = 7, units = "in", device = "tiff")
+
+# Disagg species, corn
+data.scale <- na.omit(data.scale)
+newdata.corn <- data.frame(
+  precip.accum = seq(from = mean(data.scale$precip.accum), to = mean(data.scale$precip.accum), length.out = 100),
+  dd.acum = seq(from = mean(data.scale$dd.acum), to = mean(data.scale$dd.acum), length.out = 100),
+  ag_corn10 = seq(from = min(data.scale$ag_corn10), to = max(data.scale$ag_corn10), length.out = 100),
+  ag_beans10 = seq(from = mean(data.scale$ag_beans10), to = mean(data.scale$ag_beans10), length.out = 100),
+  ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
+  forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
+  lat = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
+  long = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
+)
+
+newdata.corn <- rbind(newdata.corn, newdata.corn, newdata.corn)
+newdata.corn$Species <- as.factor(c(rep("A. glycines", 100), rep("R. padi", 100), rep("R. maidis", 100)))
+
+predict.corn <- as.data.frame(predict.gam(mod.gam3.aglyc, newdata.corn[1:100,], se.fit = T))
+predict.corn <- rbind(predict.corn, as.data.frame(predict.gam(mod.gam3.rpadi, newdata.corn[101:200,], se.fit = T)))
+predict.corn <- rbind(predict.corn, as.data.frame(predict.gam(mod.gam3.rmaidis, newdata.corn[201:300,], se.fit = T)))
+
+newdata.corn <- cbind(newdata.corn, predict.corn)
+newdata.corn <- within(newdata.corn, {
+  TotalCaptures <- exp(fit)
+  LL <- exp(fit - 1.96 * se.fit)
+  UL <- exp(fit + 1.96 * se.fit)
+})
+newdata.corn$ag_corn10 <- newdata.corn$ag_corn10*(sqrt(mean(data.total$ag_corn10^2)))
+
+ggplot(newdata.corn[newdata.corn$Species!="R. padi",], aes(ag_corn10, TotalCaptures)) +
+  geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
+  geom_line(aes(colour = Species), size = 2) +
+  labs(x = "% Land Cover Corn w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
+  theme(text = element_text(size = 26),
+        panel.background = element_blank(),
+        legend.text = element_text(face = "italic"))
+ggsave("fig5.tiff", height = 7, width = 7, units = "in", device = "tiff")
+
+# Disagg species, beans
+data.scale <- na.omit(data.scale)
+newdata.beans <- data.frame(
+  precip.accum = seq(from = mean(data.scale$precip.accum), to = mean(data.scale$precip.accum), length.out = 100),
+  dd.acum = seq(from = mean(data.scale$dd.acum), to = mean(data.scale$dd.acum), length.out = 100),
+  ag_corn10 = seq(from = mean(data.scale$ag_corn10), to = mean(data.scale$ag_corn10), length.out = 100),
+  ag_beans10 = seq(from = min(data.scale$ag_beans10), to = max(data.scale$ag_beans10), length.out = 100),
+  ag_smgrains10 = seq(from = mean(data.scale$ag_smgrains10), to = mean(data.scale$ag_smgrains10), length.out = 100),
+  forest10 = seq(from = mean(data.scale$forest10), to = mean(data.scale$forest10), length.out = 100),
+  lat = seq(from = mean(data.scale$lat.x), to = mean(data.scale$lat.x), length.out = 100),
+  long = seq(from = mean(data.scale$long.x), to = mean(data.scale$long.x), length.out = 100),
+  year = seq(from = mean(data.scale$year), to = mean(data.scale$year), length.out = 100)
+)
+
+newdata.beans <- rbind(newdata.beans, newdata.beans, newdata.beans)
+newdata.beans$Species <- as.factor(c(rep("A. glycines", 100), rep("R. padi", 100), rep("R. maidis", 100)))
+
+predict.beans <- as.data.frame(predict.gam(mod.gam3.aglyc, newdata.beans[1:100,], se.fit = T))
+predict.beans <- rbind(predict.beans, as.data.frame(predict.gam(mod.gam3.rpadi, newdata.beans[101:200,], se.fit = T)))
+predict.beans <- rbind(predict.beans, as.data.frame(predict.gam(mod.gam3.rmaidis, newdata.beans[201:300,], se.fit = T)))
+
+newdata.beans <- cbind(newdata.beans, predict.beans)
+newdata.beans <- within(newdata.beans, {
+  TotalCaptures <- exp(fit)
+  LL <- exp(fit - 1.96 * se.fit)
+  UL <- exp(fit + 1.96 * se.fit)
+})
+newdata.beans$ag_beans10 <- newdata.beans$ag_beans10*(sqrt(mean(data.total$ag_beans10^2)))
+
+
+ggplot(newdata.beans[newdata.beans$Species!="R. padi",], aes(ag_beans10, TotalCaptures)) +
+  geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
+  geom_line(aes(colour = Species), size = 2) +
+  labs(x = "% Land Cover Soybeans w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
+  theme(text = element_text(size = 26),
+        axis.title.x = element_text(size = 22),
+        panel.background = element_blank(),
+        legend.text = element_text(face = "italic"))
+ggsave("fig6.tiff", height = 7, width = 7, units = "in", device = "tiff")
