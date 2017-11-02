@@ -661,8 +661,9 @@ newdata.ddacum$dd.acum <- newdata.ddacum$dd.acum*(sqrt(mean(data2$dd.acum^2))) #
 
 ggplot(newdata.ddacum, aes(dd.acum, TotalCaptures)) +
   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
-  #geom_point(data=na.omit(data2),aes(x=dd.acum,y=captures),size=2)+
+  #geom_point(data = na.omit(data.total), aes(x = dd.acum, y = captures), size = 2) +
   geom_line(size = 2) +
+  #scale_y_continuous(trans = 'log2') +
   labs(x = "Seasonal Degree Day Accumulation", y = "Predicted Total Seasonal Captures") +
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 ggsave("fig3-2.tiff", height = 7, width = 7, units = "in", device = "tiff")
@@ -690,8 +691,9 @@ newdata.precip$precip.accum <- newdata.precip$precip.accum*(sqrt(mean(data2$prec
 
 ggplot(newdata.precip, aes(precip.accum, TotalCaptures)) +
   geom_ribbon(aes(ymin = LL, ymax = UL), alpha = .25) +
-  #geom_point(data=na.omit(data2),aes(x=precip.accum,y=captures),size=2)+
+  #geom_point(data = na.omit(data.total), aes(x = precip.accum, y = captures),size = 2) +
   geom_line(size = 2) +
+  #scale_y_continuous(trans = 'log2') +
   labs(x = "Seasonal Precipitation Accumulation (mm)", y = "Predicted Total Seasonal Captures") +
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),legend.position="none")
 ggsave("fig4-2.tiff", height = 7, width = 8, units = "in", device = "tiff")
@@ -726,11 +728,11 @@ newdata.corn <- within(newdata.corn, {
 newdata.corn$ag_corn10 <- newdata.corn$ag_corn10*(sqrt(mean(na.omit(data2)$ag_corn10^2)))
 
 ggplot(newdata.corn[newdata.corn$Species!="R. padi",], aes(ag_corn10, TotalCaptures)) +
-  #geom_point(data=na.omit(data.aglyc),aes(x=ag_corn10,y=captures),color="#F8766D",size=2)+
-  #geom_point(data=na.omit(data.rmaidis),aes(x=ag_corn10,y=captures),color="#00BFC4",size=2)+
+  #geom_point(data = na.omit(data.total.aglyc), aes(x = ag_corn10, y = captures), color = "#F8766D" ,size = 2) +
+  #geom_point(data = na.omit(data.total.rmaidis), aes(x = ag_corn10, y = captures), color = "#00BFC4" ,size = 2) +
   geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
   geom_line(aes(colour = Species), size = 2) +
-  #scale_y_continuous(trans='log2')+
+  #scale_y_continuous(trans = 'log2') +
   labs(x = "% Land Cover Corn w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),
   legend.text = element_text(face = "italic"))
@@ -766,11 +768,12 @@ newdata.beans <- within(newdata.beans, {
 newdata.beans$ag_beans10 <- newdata.beans$ag_beans10*(sqrt(mean(na.omit(data2)$ag_beans10^2)))
 
 
-ggplot(newdata.beans[newdata.beans$Species!="R. padi",], aes(ag_beans10, TotalCaptures)) +
-  #geom_point(data=na.omit(data.aglyc),aes(x=ag_beans10,y=captures),color="#F8766D",size=2)+
-  #geom_point(data=na.omit(data.rmaidis),aes(x=ag_beans10,y=captures),color="#00BFC4",size=2)+
+ggplot(newdata.beans[newdata.beans$Species!= "R. padi",], aes(ag_beans10, TotalCaptures)) +
+  #geom_point(data = na.omit(data.total.aglyc), aes(x = ag_beans10, y = captures), color = "#F8766D", size = 2) +
+  #geom_point(data = na.omit(data.total.rmaidis), aes(x = ag_beans10, y = captures), color = "#00BFC4", size = 2) +
   geom_ribbon(aes(ymin = LL, ymax = UL, fill = Species), alpha = .25) +
   geom_line(aes(colour = Species), size = 2) +
+  #scale_y_continuous(trans = 'log2') +
   labs(x = "% Land Cover Soybeans w/i 10km Radius", y = "Predicted Total Seasonal Captures") +
   theme(text = element_text(size=24),axis.text=element_text(color="black"),panel.background=element_blank(),panel.grid.major=element_blank(),panel.grid.minor=element_blank(),axis.line = element_line(size=.7, color="black"),
         legend.text = element_text(face = "italic"))
