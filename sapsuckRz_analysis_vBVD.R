@@ -73,7 +73,7 @@ names(aphid.rmaidis)<-c("year","doy","site.id","captures")
 weather.cast$year<-isoyear(weather.cast$date)
 
 data<-merge(aphid.all,weather.cast,by=c("site.id","year","doy"),all.x=T)
-data.agylc<-merge(aphid.aglyc,weather.cast,by=c("site.id","year","doy"),all.x=T)
+data.aglyc<-merge(aphid.aglyc,weather.cast,by=c("site.id","year","doy"),all.x=T)
 data.rpadi<-merge(aphid.rpadi,weather.cast,by=c("site.id","year","doy"),all.x=T)
 data.rmaidis<-merge(aphid.rmaidis,weather.cast,by=c("site.id","year","doy"),all.x=T)
 
@@ -105,5 +105,10 @@ data.rmaidis<-merge(data.rmaidis,coords,by="site.id",all.x=T)
 
 
 # Dependent Variable Construction #####
-# This produces two sets of dataframes, "max" and "maxday" which will be used as
-# dependent variables to model peak abundence and timing of peak abundence
+# This produces a set of dataframes, "max.[species]", which provides max captures over season, "captures", and date of max captures "doy"
+
+max<-as.data.frame(data %>% group_by(year,site.id) %>% slice(which.max(captures)))
+max.aglyc<-as.data.frame(data.aglyc %>% group_by(year,site.id) %>% slice(which.max(captures)))
+max.rpadi<-as.data.frame(data.rpadi %>% group_by(year,site.id) %>% slice(which.max(captures)))
+max.rmaidis<-as.data.frame(data.rmaidis %>% group_by(year,site.id) %>% slice(which.max(captures)))
+
