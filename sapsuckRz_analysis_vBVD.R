@@ -69,7 +69,6 @@ names(aphid.aglyc)<-c("year","doy","site.id","captures")
 names(aphid.rpadi)<-c("year","doy","site.id","captures")
 names(aphid.rmaidis)<-c("year","doy","site.id","captures")
 
-
 weather.cast$year<-isoyear(weather.cast$date)
 
 data<-merge(aphid.all,weather.cast,by=c("site.id","year","doy"),all.x=T)
@@ -77,6 +76,66 @@ data.aglyc<-merge(aphid.aglyc,weather.cast,by=c("site.id","year","doy"),all.x=T)
 data.rpadi<-merge(aphid.rpadi,weather.cast,by=c("site.id","year","doy"),all.x=T)
 data.rmaidis<-merge(aphid.rmaidis,weather.cast,by=c("site.id","year","doy"),all.x=T)
 
+####Calculate weather variables for analysis####
+##All aphids
+#Calculate rolling averages degree day accumulation for all aphids
+data$dd.week<-rollmean(data$dd, 7, align = "right", fill = NA)
+data$dd.month<-rollmean(data$dd, 30, align = "right", fill = NA)
+data$dd.year<-data$dd.acum/data$doy
+
+#Calculate rolling average precipitation for all aphids
+data$precip.week<-rollmean(data$precip, 7, align = "right", fill = NA)
+data$precip.month<-rollmean(data$precip, 30, align = "right", fill = NA)
+data$precip.year<-data$precip.accum/data$doy
+
+#Calculate total precipitation before peak for all aphids
+data$precip.week.tot<-rollsum(data$precip, 7, align = "right", fill = NA)
+data$precip.month.tot<-rollsum(data$precip, 30, align = "right", fill = NA)
+
+##A. glyc
+#Calculate rolling averages degree day accumulation for A. glyc
+data.aglyc$dd.week<-rollmean(data.aglyc$dd, 7, align = "right", fill = NA)
+data.aglyc$dd.month<-rollmean(data.aglyc$dd, 30, align = "right", fill = NA)
+data.aglyc$dd.year<-data.aglyc$dd.acum/data.aglyc$doy
+
+#Calculate rolling average precipitation for A. glyc
+data.aglyc$precip.week<-rollmean(data.aglyc$precip, 7, align = "right", fill = NA)
+data.aglyc$precip.month<-rollmean(data.aglyc$precip, 30, align = "right", fill = NA)
+data.aglyc$precip.year<-data.aglyc$precip.accum/data.aglyc$doy
+
+#Calculate total precipitation before peak for A. glyc
+data.aglyc$precip.week.tot<-rollsum(data.aglyc$precip, 7, align = "right", fill = NA)
+data.aglyc$precip.month.tot<-rollsum(data.aglyc$precip, 30, align = "right", fill = NA)
+
+##R. padi
+#Calculate rolling averages degree day accumulation for R. padi
+data.rpadi$dd.week<-rollmean(data.rpadi$dd, 7, align = "right", fill = NA)
+data.rpadi$dd.month<-rollmean(data.rpadi$dd, 30, align = "right", fill = NA)
+data.rpadi$dd.year<-data.rpadi$dd.acum/data.rpadi$doy
+
+#Calculate rolling average precipitation for R. padi
+data.rpadi$precip.week<-rollmean(data.rpadi$precip, 7, align = "right", fill = NA)
+data.rpadi$precip.month<-rollmean(data.rpadi$precip, 30, align = "right", fill = NA)
+data.rpadi$precip.year<-data.rpadi$precip.accum/data.rpadi$doy
+
+#Calculate total precipitation before peak for R. padi
+data.rpadi$precip.week.tot<-rollsum(data.rpadi$precip, 7, align = "right", fill = NA)
+data.rpadi$precip.month.tot<-rollsum(data.rpadi$precip, 30, align = "right", fill = NA)
+
+##Rmadis
+#Calculate rolling averages degree day accumulation for R. maidis
+data.rmaidis$dd.week<-rollmean(data.rmaidis$dd, 7, align = "right", fill = NA)
+data.rmaidis$dd.month<-rollmean(data.rmaidis$dd, 30, align = "right", fill = NA)
+data.rmaidis$dd.year<-data.rmaidis$dd.acum/data.rmaidis$doy
+
+#Calculate rolling average precipitation for R. maidis
+data.rmaidis$precip.week<-rollmean(data.rmaidis$precip, 7, align = "right", fill = NA)
+data.rmaidis$precip.month<-rollmean(data.rmaidis$precip, 30, align = "right", fill = NA)
+data.rmaidis$precip.year<-data.rmaidis$precip.accum/data.rmaidis$doy
+
+#Calculate total precipitation before peak for R. maidis
+data.rmaidis$precip.week.tot<-rollsum(data.rmaidis$precip, 7, align = "right", fill = NA)
+data.rmaidis$precip.month.tot<-rollsum(data.rmaidis$precip, 30, align = "right", fill = NA)
 
 #########/////// CDL and Geography
 cdl<-read.csv("Data/cdl.csv")
