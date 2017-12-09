@@ -111,4 +111,3 @@ max<-as.data.frame(data %>% group_by(year,site.id) %>% slice(which.max(captures)
 max.aglyc<-as.data.frame(data.aglyc %>% group_by(year,site.id) %>% slice(which.max(captures)))
 max.rpadi<-as.data.frame(data.rpadi %>% group_by(year,site.id) %>% slice(which.max(captures)))
 max.rmaidis<-as.data.frame(data.rmaidis %>% group_by(year,site.id) %>% slice(which.max(captures)))
-
