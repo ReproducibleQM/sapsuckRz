@@ -256,14 +256,6 @@ logLik(mod.gam3)
 stat <- as.numeric(2 * (logLik(mod.gam2) - logLik(mod.gam3)))
 pchisq(stat, df = 33.97 - 25.16, lower.tail = FALSE)
 
-#effects plots
-
-sjp.setTheme(base = theme_bw()) 
-             
-sjp.glmer(mod2, 
-          type = "fe", 
-          sort = TRUE)
-
 
 ####Disaggregate species for Soybean Aphid (Aphis glycines) Cherry-Oat Aphid (Rhopalosiphum padi) Corn Leaf Aphid (Rhopalosiphum maidis)####
 
